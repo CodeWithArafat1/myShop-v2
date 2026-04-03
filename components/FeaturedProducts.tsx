@@ -13,6 +13,23 @@ import {
 import { ProductCard } from "./shared/cards/ProductCard";
 
 
+// ✅ ADD THIS TYPE (MAIN FIX)
+type Product = {
+  _id: string;
+  name: string;
+  category: string;
+  price: number;
+  oldPrice?: number;
+  colors: string[];
+  sizes: string[];
+  image: string;
+  images: string[];
+  isNew: boolean;
+  isFeatured: boolean;
+  description: string;
+  createdAt: string;
+};
+
 
 // --- Demo Data ---
 const products: Product[] = [
@@ -24,7 +41,8 @@ const products: Product[] = [
     oldPrice: 3500,
     colors: [],
     sizes: [],
-    image: "https://res.cloudinary.com/dfyst8kiy/image/upload/v1770733078/amarshop_products/xfiakqw8d90wex7zfbll.webp",
+    image:
+      "https://res.cloudinary.com/dfyst8kiy/image/upload/v1770733078/amarshop_products/xfiakqw8d90wex7zfbll.webp",
     images: [],
     isNew: false,
     isFeatured: true,
@@ -39,7 +57,8 @@ const products: Product[] = [
     oldPrice: 4000,
     colors: [],
     sizes: [],
-    image: "https://res.cloudinary.com/dfyst8kiy/image/upload/v1770733078/amarshop_products/xfiakqw8d90wex7zfbll.webp",
+    image:
+      "https://res.cloudinary.com/dfyst8kiy/image/upload/v1770733078/amarshop_products/xfiakqw8d90wex7zfbll.webp",
     images: [],
     isNew: true,
     isFeatured: false,
@@ -54,7 +73,8 @@ const products: Product[] = [
     oldPrice: 3200,
     colors: [],
     sizes: [],
-    image: "https://res.cloudinary.com/dfyst8kiy/image/upload/v1770733078/amarshop_products/xfiakqw8d90wex7zfbll.webp",
+    image:
+      "https://res.cloudinary.com/dfyst8kiy/image/upload/v1770733078/amarshop_products/xfiakqw8d90wex7zfbll.webp",
     images: [],
     isNew: false,
     isFeatured: false,
@@ -69,7 +89,8 @@ const products: Product[] = [
     oldPrice: 2400,
     colors: [],
     sizes: [],
-    image: "https://res.cloudinary.com/dfyst8kiy/image/upload/v1770733078/amarshop_products/xfiakqw8d90wex7zfbll.webp",
+    image:
+      "https://res.cloudinary.com/dfyst8kiy/image/upload/v1770733078/amarshop_products/xfiakqw8d90wex7zfbll.webp",
     images: [],
     isNew: false,
     isFeatured: false,
@@ -81,7 +102,7 @@ const products: Product[] = [
 export default function FeaturedProducts() {
   const [api, setApi] = React.useState<CarouselApi>();
 
-  // 🔥 Autoplay (3 seconds)
+  // 🔥 Autoplay
   const autoplay = React.useRef(
     Autoplay({
       delay: 3000,
@@ -94,7 +115,7 @@ export default function FeaturedProducts() {
     <section className="py-16">
       <div className="container mx-auto px-12">
 
-        {/* --- Header --- */}
+        {/* Header */}
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold text-gray-900">
             Featured Products
@@ -104,7 +125,7 @@ export default function FeaturedProducts() {
           </p>
         </div>
 
-        {/* --- Carousel --- */}
+        {/* Carousel */}
         <div className="relative">
 
           <Carousel
@@ -124,18 +145,18 @@ export default function FeaturedProducts() {
             </CarouselContent>
           </Carousel>
 
-          {/* --- LEFT ARROW --- */}
+          {/* LEFT */}
           <button
             onClick={() => api?.scrollPrev()}
-            className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-md w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition"
+            className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-md w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition z-10"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
 
-          {/* --- RIGHT ARROW --- */}
+          {/* RIGHT */}
           <button
             onClick={() => api?.scrollNext()}
-            className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-md w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition"
+            className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-md w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition z-10"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
