@@ -1,5 +1,5 @@
-"use client"
-import { useState, useEffect, useRef } from "react";
+"use client";
+import { useState, useEffect, useRef, ReactNode } from "react";
 import { Truck, RefreshCcw, Award, Banknote } from "lucide-react";
 import { FeatureCard } from "./shared/cards/FeatureCard";
 
@@ -28,17 +28,23 @@ const featuresData = [
 ];
 
 // --- Custom Scroll Reveal Wrapper ---
-function RevealOnScroll({ children, delay }) {
+// ✅ Add props type
+type RevealProps = {
+  children: ReactNode;
+  delay?: number; // optional
+};
+
+function RevealOnScroll({ children, delay = 0 }: RevealProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // যখন কম্পোনেন্টটি স্ক্রিনে দেখা যাবে (২০%)
+       
         if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.unobserve(entry.target); // একবারই অ্যানিমেশন হবে
+          setTimeout(() => setIsVisible(true), delay);
+          observer.unobserve(entry.target);
         }
       },
       { threshold: 0.2 }
@@ -46,8 +52,8 @@ function RevealOnScroll({ children, delay }) {
 
     if (ref.current) observer.observe(ref.current);
 
-    return () => observer.disconnect(); // ক্লিনআপ
-  }, []);
+    return () => observer.disconnect(); // clean up
+  }, [delay]);
 
   return (
     <div
@@ -62,6 +68,7 @@ function RevealOnScroll({ children, delay }) {
   );
 }
 
+// --- Features Section ---
 export default function FeaturesSection() {
   return (
     <section className="py-16 sm:py-20">

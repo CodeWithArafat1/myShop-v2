@@ -1,23 +1,21 @@
 "use client";
 
 import { ReactLenis } from "@studio-freight/react-lenis";
-import React from "react";
 
 export default function SmoothScrolling({
   children,
 }: {
-  children: React.ReactNode;
+  children: any;
 }) {
   return (
     <ReactLenis
       root
       options={{
-        lerp: 0.05, 
+        lerp: 0.07,
         wheelMultiplier: 1,
-        // Removed syncTouch to prevent interference with mobile's native momentum scrolling
       }}
     >
-      {children}
+      {children as any}
     </ReactLenis>
   );
 }
