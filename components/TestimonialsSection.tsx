@@ -10,35 +10,33 @@ import {
   CarouselItem,
   type CarouselApi,
 } from "@/components/ui/carousel";
-import { TestimonialCard,Testimonial } from "./shared/cards/TestimonialCard";
-
-
+import { TestimonialCard, Testimonial } from "./shared/cards/TestimonialCard";
 
 // --- Demo Data ---
 const testimonials: Testimonial[] = [
   {
     id: "1",
-    name: "Fatima Rahman",
+    name: "ফাতিমা রহমান",
     message:
-      "Absolutely love the quality! The Jamdani saree I ordered was beyond my expectations. Will definitely order again.",
+      "কোয়ালিটি এক কথায় অসাধারণ! আমি যে জামদানি শাড়িটি অর্ডার করেছিলাম তা আমার প্রত্যাশার চেয়েও অনেক ভালো ছিল। অবশ্যই আবার অর্ডার করব।",
   },
   {
     id: "2",
-    name: "Nusrat Jahan",
+    name: "নুসরাত জাহান",
     message:
-      "Fast delivery and beautiful packaging. The silk saree is so elegant and the color is exactly as shown.",
+      "খুব দ্রুত ডেলিভারি পেয়েছি এবং প্যাকেজিংটাও সুন্দর ছিল। সিল্কের শাড়িটি অত্যন্ত সুন্দর এবং রঙ ঠিক ছবির মতোই।",
   },
   {
     id: "3",
-    name: "Ayesha Siddiqua",
+    name: "আয়েশা সিদ্দিকা",
     message:
-      "Best saree shop online! Great collection and the customer service is amazing. Highly recommended.",
+      "অনলাইনে সেরা শাড়ির দোকান! দুর্দান্ত কালেকশন এবং তাদের কাস্টমার সার্ভিসও অসাধারণ। সবাইকে সুপারিশ করছি।",
   },
   {
     id: "4",
-    name: "Sadia Islam",
+    name: "সাদিয়া ইসলাম",
     message:
-      "Very satisfied with my purchase. Fabric quality is top-notch and delivery was super quick.",
+      "আমার কেনাকাটায় আমি খুবই সন্তুষ্ট। কাপড়ের কোয়ালিটি দুর্দান্ত এবং ডেলিভারি খুব দ্রুত ছিল।",
   },
 ];
 
@@ -61,10 +59,10 @@ export default function TestimonialsSection() {
         {/* --- Header --- */}
         <div className="text-center mb-12">
           <p className="text-green-600 text-xs font-semibold tracking-widest uppercase mb-2">
-            Testimonials
+            গ্রাহকদের মতামত
           </p>
           <h2 className="text-3xl md:text-5xl font-bold text-gray-900">
-            What Our Customers Say
+            আমাদের গ্রাহকরা কী বলছেন
           </h2>
         </div>
 

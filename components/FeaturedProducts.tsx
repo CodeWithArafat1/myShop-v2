@@ -12,8 +12,6 @@ import {
 } from "@/components/ui/carousel";
 import { ProductCard } from "./shared/cards/ProductCard";
 
-
-// ✅ ADD THIS TYPE (MAIN FIX)
 type Product = {
   _id: string;
   name: string;
@@ -30,13 +28,11 @@ type Product = {
   createdAt: string;
 };
 
-
-// --- Demo Data ---
 const products: Product[] = [
   {
     _id: "1",
-    name: "Royal Blue Silk Saree",
-    category: "Silk",
+    name: "রয়েল ব্লু সিল্ক শাড়ি",
+    category: "সিল্ক",
     price: 2850,
     oldPrice: 3500,
     colors: [],
@@ -51,8 +47,8 @@ const products: Product[] = [
   },
   {
     _id: "2",
-    name: "Elegant Green Jamdani",
-    category: "Jamdani",
+    name: "এলিগ্যান্ট গ্রিন জামদানি",
+    category: "জামদানি",
     price: 3200,
     oldPrice: 4000,
     colors: [],
@@ -67,8 +63,8 @@ const products: Product[] = [
   },
   {
     _id: "3",
-    name: "Traditional White & Green",
-    category: "Cotton",
+    name: "ঐতিহ্যবাহী সাদা ও সবুজ শাড়ি",
+    category: "কটন",
     price: 2500,
     oldPrice: 3200,
     colors: [],
@@ -83,8 +79,8 @@ const products: Product[] = [
   },
   {
     _id: "4",
-    name: "Premium Cotton Saree",
-    category: "Cotton",
+    name: "প্রিমিয়াম কটন শাড়ি",
+    category: "কটন",
     price: 1850,
     oldPrice: 2400,
     colors: [],
@@ -102,7 +98,6 @@ const products: Product[] = [
 export default function FeaturedProducts() {
   const [api, setApi] = React.useState<CarouselApi>();
 
-  // 🔥 Autoplay
   const autoplay = React.useRef(
     Autoplay({
       delay: 3000,
@@ -115,17 +110,15 @@ export default function FeaturedProducts() {
     <section className="py-16">
       <div className="container mx-auto px-12">
 
-        {/* Header */}
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold text-gray-900">
-            Featured Products
+            নির্বাচিত প্রোডাক্টসমূহ
           </h2>
           <p className="text-gray-500 mt-2">
-            Handpicked sarees from our latest collection
+            আমাদের নতুন কালেকশন থেকে বাছাইকৃত শাড়িসমূহ
           </p>
         </div>
 
-        {/* Carousel */}
         <div className="relative">
 
           <Carousel
@@ -145,18 +138,16 @@ export default function FeaturedProducts() {
             </CarouselContent>
           </Carousel>
 
-          {/* LEFT */}
           <button
             onClick={() => api?.scrollPrev()}
-            className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-md w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition z-10"
+            className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-md w-10 h-10 rounded-full hidden md:flex items-center justify-center hover:bg-gray-100 transition z-10"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
 
-          {/* RIGHT */}
           <button
             onClick={() => api?.scrollNext()}
-            className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-md w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition z-10"
+            className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-md w-10 h-10 rounded-full hidden md:flex items-center justify-center hover:bg-gray-100 transition z-10"
           >
             <ChevronRight className="w-5 h-5" />
           </button>

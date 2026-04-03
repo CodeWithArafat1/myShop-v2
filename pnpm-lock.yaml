@@ -29,12 +29,18 @@ importers:
       next:
         specifier: 16.2.2
         version: 16.2.2(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      nodemailer:
+        specifier: ^8.0.4
+        version: 8.0.4
       radix-ui:
         specifier: ^1.4.3
         version: 1.4.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react:
         specifier: 19.2.4
         version: 19.2.4
+      react-countup:
+        specifier: ^6.5.3
+        version: 6.5.3(react@19.2.4)
       react-dom:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
@@ -54,6 +60,9 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.19.37
+      '@types/nodemailer':
+        specifier: ^7.0.11
+        version: 7.0.11
       '@types/react':
         specifier: ^19
         version: 19.2.14
@@ -1453,6 +1462,9 @@ packages:
   '@types/node@20.19.37':
     resolution: {integrity: sha512-8kzdPJ3FsNsVIurqBs7oodNnCEVbni9yUEkaHbgptDACOPW04jimGagZ51E6+lXUwJjgnBw+hyko/lkFWCldqw==}
 
+  '@types/nodemailer@7.0.11':
+    resolution: {integrity: sha512-E+U4RzR2dKrx+u3N4DlsmLaDC6mMZOM/TPROxA0UAPiTgI0y4CEFBmZE+coGWTjakDriRsXG368lNk1u9Q0a2g==}
+
   '@types/prop-types@15.7.15':
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
 
@@ -1894,6 +1906,9 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  countup.js@2.10.0:
+    resolution: {integrity: sha512-QQpZx7oYxsR+OeITlZe46fY/OQjV11oBqjY8wgIXzLU2jIz8GzOrbMhqKLysGY8bWI3T1ZNrYkwGzKb4JNgyzg==}
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -3005,6 +3020,10 @@ packages:
   node-releases@2.0.37:
     resolution: {integrity: sha512-1h5gKZCF+pO/o3Iqt5Jp7wc9rH3eJJ0+nh/CIoiRwjRxde/hAHyLPXYN4V3CqKAbiZPSeJFSWHmJsbkicta0Eg==}
 
+  nodemailer@8.0.4:
+    resolution: {integrity: sha512-k+jf6N8PfQJ0Fe8ZhJlgqU5qJU44Lpvp2yvidH3vp1lPnVQMgi4yEEMPXg5eJS1gFIJTVq1NHBk7Ia9ARdSBdQ==}
+    engines: {node: '>=6.0.0'}
+
   npm-run-path@4.0.1:
     resolution: {integrity: sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw==}
     engines: {node: '>=8'}
@@ -3216,6 +3235,11 @@ packages:
   raw-body@3.0.2:
     resolution: {integrity: sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA==}
     engines: {node: '>= 0.10'}
+
+  react-countup@6.5.3:
+    resolution: {integrity: sha512-udnqVQitxC7QWADSPDOxVWULkLvKUWrDapn5i53HE4DPRVgs+Y5rr4bo25qEl8jSh+0l2cToJgGMx+clxPM3+w==}
+    peerDependencies:
+      react: '>= 16.3.0'
 
   react-dom@19.2.4:
     resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
@@ -5205,6 +5229,10 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
+  '@types/nodemailer@7.0.11':
+    dependencies:
+      '@types/node': 20.19.37
+
   '@types/prop-types@15.7.15': {}
 
   '@types/react-dom@19.2.3(@types/react@19.2.14)':
@@ -5640,6 +5668,8 @@ snapshots:
       parse-json: 5.2.0
     optionalDependencies:
       typescript: 5.9.3
+
+  countup.js@2.10.0: {}
 
   cross-spawn@7.0.6:
     dependencies:
@@ -6835,6 +6865,8 @@ snapshots:
 
   node-releases@2.0.37: {}
 
+  nodemailer@8.0.4: {}
+
   npm-run-path@4.0.1:
     dependencies:
       path-key: 3.1.1
@@ -7109,6 +7141,11 @@ snapshots:
       http-errors: 2.0.1
       iconv-lite: 0.7.2
       unpipe: 1.0.0
+
+  react-countup@6.5.3(react@19.2.4):
+    dependencies:
+      countup.js: 2.10.0
+      react: 19.2.4
 
   react-dom@19.2.4(react@19.2.4):
     dependencies:

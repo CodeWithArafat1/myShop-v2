@@ -40,6 +40,7 @@ const NAV_LINKS = [
   { name: "Shop", href: "/shop", icon: ShoppingBag },
   { name: "Collections", href: "/collections", icon: ShoppingBag },
   { name: "My Order", href: "/track-order", icon: Sparkles },
+  { name: "Contact", href: "/contact", icon: Sparkles },
   { name: "About Us", href: "/about", icon: Info },
 ];
 
