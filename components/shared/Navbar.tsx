@@ -37,7 +37,7 @@ interface Product {
 // --- Static Data ---
 const NAV_LINKS = [
   { name: "Home", href: "/", icon: Home },
-  { name: "Shop", href: "/shop", icon: ShoppingBag },
+  { name: "Shop", href: "/product", icon: ShoppingBag },
   { name: "Collections", href: "/collections", icon: ShoppingBag },
   { name: "My Order", href: "/track-order", icon: Sparkles },
   { name: "Contact", href: "/contact", icon: Sparkles },

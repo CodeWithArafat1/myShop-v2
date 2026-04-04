@@ -30,7 +30,7 @@ export function ProductCard({ product }: ProductCardProps) {
     <div className="group bg-white rounded-[20px] overflow-hidden shadow-[0_4px_20px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 transition-all duration-300 relative flex flex-col h-full">
       
       {/* --- Image Section --- */}
-      <Link href={`/shop/${product._id}`} className="relative w-full aspect-4/5 overflow-hidden bg-gray-50 cursor-pointer block">
+      <Link href={`/product/${product._id}`} className="relative w-full aspect-4/5 overflow-hidden bg-gray-50 cursor-pointer block">
         <Image
           src={product.image}
           alt={product.name}
