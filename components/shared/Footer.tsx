@@ -13,7 +13,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <h2 className="text-xl font-semibold text-white mb-4">
-              Rongila <span className="text-green-500">Saree</span>
+              Amar<span className="text-green-500">Shop</span>
             </h2>
 
             <p className="text-sm leading-relaxed mb-6 text-gray-400">
