@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+  memo,
+} from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
   ShoppingCart,
-  Truck,
-  RotateCcw,
-  Shield,
   ChevronRight,
   ChevronLeft,
   Minus,
@@ -43,13 +47,22 @@ export interface Product {
 }
 
 // ─────────────────────────────────────────────
-// Module-level session cache
+// Module-level session cache (stable across HMR via globalThis)
 // ─────────────────────────────────────────────
-const productCache = new Map<string, Product[]>();
+const getCache = (): Map<string, Product[]> => {
+  if (typeof globalThis !== "undefined") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const g = globalThis as any;
+    if (!g.__pdCache) g.__pdCache = new Map<string, Product[]>();
+    return g.__pdCache as Map<string, Product[]>;
+  }
+  return new Map();
+};
 
 async function fetchAllProducts(): Promise<Product[]> {
+  const cache = getCache();
   const CACHE_KEY = "all_products";
-  if (productCache.has(CACHE_KEY)) return productCache.get(CACHE_KEY)!;
+  if (cache.has(CACHE_KEY)) return cache.get(CACHE_KEY)!;
 
   const res = await fetch("https://my-shop-t2x7.vercel.app/api/products", {
     next: { revalidate: 60 },
@@ -63,7 +76,7 @@ async function fetchAllProducts(): Promise<Product[]> {
       ((data as Record<string, unknown>)?.products as Product[]) ||
       [];
 
-  productCache.set(CACHE_KEY, arr);
+  cache.set(CACHE_KEY, arr);
   return arr;
 }
 
@@ -80,7 +93,7 @@ function Skeleton({ className = "" }: { className?: string }) {
 
 function ProductSkeleton() {
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-16">
         <div className="flex flex-col gap-3">
           <Skeleton className="w-full aspect-square rounded-2xl sm:rounded-3xl" />
@@ -120,7 +133,7 @@ const TRUST_BADGES = [
 ] as const;
 
 // ─────────────────────────────────────────────
-// Fullscreen Modal (extracted for clarity)
+// Fullscreen Modal — memoized to prevent re-render on parent state changes
 // ─────────────────────────────────────────────
 interface FullscreenModalProps {
   images: string[];
@@ -139,7 +152,7 @@ interface FullscreenModalProps {
   dragOffset: number;
 }
 
-function FullscreenModal({
+const FullscreenModal = memo(function FullscreenModal({
   images,
   current,
   productName,
@@ -162,7 +175,7 @@ function FullscreenModal({
     return () => { document.body.style.overflow = prev; };
   }, []);
 
-  // Close on Escape key
+  // Close on Escape / arrow keys
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -174,7 +187,6 @@ function FullscreenModal({
   }, [onClose, onNext, onPrev]);
 
   return (
-    // Backdrop — click backdrop to close
     <div
       className="fs-backdrop"
       onClick={onClose}
@@ -182,24 +194,13 @@ function FullscreenModal({
       aria-modal="true"
       aria-label={`${productName} fullscreen image viewer`}
     >
-      {/* ── Fixed top bar — always on top ── */}
+      {/* ── Top bar ── */}
       <div className="fs-topbar" onClick={(e) => e.stopPropagation()}>
-        {/* Zoom controls */}
         <div className="fs-controls-left">
-          <button
-            type="button"
-            aria-label="Zoom in"
-            className="fs-icon-btn"
-            onClick={onZoomIn}
-          >
+          <button type="button" aria-label="Zoom in" className="fs-icon-btn" onClick={onZoomIn}>
             <ZoomIn size={18} />
           </button>
-          <button
-            type="button"
-            aria-label="Zoom out"
-            className="fs-icon-btn"
-            onClick={onZoomOut}
-          >
+          <button type="button" aria-label="Zoom out" className="fs-icon-btn" onClick={onZoomOut}>
             <ZoomOut size={18} />
           </button>
           {zoom !== 1 && (
@@ -207,18 +208,14 @@ function FullscreenModal({
           )}
         </div>
 
-        {/* Image counter */}
         {images.length > 1 && (
-          <span className="fs-counter">
-            {current + 1} / {images.length}
-          </span>
+          <span className="fs-counter">{current + 1} / {images.length}</span>
         )}
 
-        {/* Close button — always top-right */}
         <button
           type="button"
           aria-label="Close fullscreen viewer"
-          className="fs-icon-btn fs-close-btn z-99"
+          className="fs-icon-btn fs-close-btn"
           onClick={onClose}
         >
           <X size={22} />
@@ -233,7 +230,6 @@ function FullscreenModal({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        {/* Prev arrow */}
         {images.length > 1 && (
           <button
             type="button"
@@ -245,7 +241,6 @@ function FullscreenModal({
           </button>
         )}
 
-        {/* Image with drag + zoom transform */}
         <div
           className="fs-img-wrapper"
           style={{
@@ -253,21 +248,27 @@ function FullscreenModal({
             transition: dragOffset !== 0 ? "none" : "transform 0.25s ease",
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           {/*
-            Intentional plain <img> here — next/image doesn't support
-            runtime transform: scale() + translateX() for zoom/swipe.
-            Image is already loaded from the main gallery (no extra request).
+            Next.js Image in fullscreen:
+            - `fill` with a fixed container lets us use optimized delivery
+            - `sizes` tuned for fullscreen: max 900px capped by CSS
+            - `priority` on the current image; others get lazy
+            - We render all images in the strip but only show current via opacity
+            so adjacent images are preloaded into the browser cache.
           */}
-          <img
-            src={images[current]}
-            alt={`${productName} — image ${current + 1}`}
-            className="fs-img"
-            draggable={false}
-          />
+          <div className="fs-img-container">
+            <Image
+              src={images[current]}
+              alt={`${productName} — image ${current + 1}`}
+              fill
+              sizes="min(90vw, 900px)"
+              className="fs-img"
+              priority
+              draggable={false}
+            />
+          </div>
         </div>
 
-        {/* Next arrow */}
         {images.length > 1 && (
           <button
             type="button"
@@ -280,10 +281,9 @@ function FullscreenModal({
         )}
       </div>
 
-      {/* ── Bottom: thumbnail strip + dots ── */}
+      {/* ── Bottom strip ── */}
       {images.length > 1 && (
         <div className="fs-bottom" onClick={(e) => e.stopPropagation()}>
-          {/* Dot indicators */}
           <div className="fs-dots">
             {images.map((_, idx) => (
               <button
@@ -296,7 +296,6 @@ function FullscreenModal({
             ))}
           </div>
 
-          {/* Thumbnail strip */}
           <div className="fs-thumbs">
             {images.map((img, idx) => (
               <button
@@ -306,8 +305,21 @@ function FullscreenModal({
                 onClick={() => onDotClick(idx)}
                 className={`fs-thumb-btn ${idx === current ? "fs-thumb-active" : ""}`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img} alt="" className="fs-thumb-img" draggable={false} />
+                {/*
+                  Thumbnails: fixed 64×74 px render box — no `fill` needed.
+                  `loading="lazy"` defers off-screen thumbs (Next.js default for non-priority).
+                  `sizes` exactly matches the CSS max-width so CDN picks the right variant.
+                */}
+                <Image
+                  src={img}
+                  alt={`${productName} thumbnail ${idx + 1}`}
+                  width={64}
+                  height={74}
+                  sizes="64px"
+                  className="fs-thumb-img"
+                  loading={idx === current ? "eager" : "lazy"}
+                  draggable={false}
+                />
               </button>
             ))}
           </div>
@@ -315,7 +327,7 @@ function FullscreenModal({
       )}
     </div>
   );
-}
+});
 
 // ─────────────────────────────────────────────
 // Main Component
@@ -331,12 +343,12 @@ export default function ProductDetail() {
   const [error, setError] = useState(false);
 
   // Gallery
-  const [allImages, setAllImages] = useState<string[]>([]);
+  const [rawImages, setRawImages] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
 
-  // Swipe drag feedback
+  // Swipe
   const [dragOffset, setDragOffset] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const touchCurrentX = useRef<number | null>(null);
@@ -346,6 +358,12 @@ export default function ProductDetail() {
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
+
+  // Stable deduped image list
+  const allImages = useMemo(
+    () => Array.from(new Set(rawImages)).filter(Boolean),
+    [rawImages]
+  );
 
   // ── Fetch ───────────────────────────────────
   useEffect(() => {
@@ -361,10 +379,7 @@ export default function ProductDetail() {
         if (!found) { setError(true); setLoading(false); return; }
 
         setProduct(found);
-        const imgs: string[] = Array.from(
-          new Set([found.image, ...(found.images ?? [])])
-        ).filter(Boolean);
-        setAllImages(imgs);
+        setRawImages([found.image, ...(found.images ?? [])]);
         setSelectedColor(found.colors?.[0] ?? "");
         setSelectedSize(found.sizes?.[0] ?? "");
 
@@ -401,7 +416,7 @@ export default function ProductDetail() {
     setDragOffset(0);
   }, []);
 
-  // ── Swipe handlers (with live drag offset for feel) ──
+  // ── Swipe ──────────────────────────────────
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
     touchCurrentX.current = e.targetTouches[0].clientX;
@@ -412,9 +427,7 @@ export default function ProductDetail() {
     if (touchStartX.current === null) return;
     const x = e.targetTouches[0].clientX;
     touchCurrentX.current = x;
-    // Live drag feedback (capped at ±120px)
-    const raw = x - touchStartX.current;
-    setDragOffset(Math.max(-120, Math.min(120, raw)));
+    setDragOffset(Math.max(-120, Math.min(120, x - touchStartX.current)));
   }, []);
 
   const onTouchEnd = useCallback(() => {
@@ -431,24 +444,16 @@ export default function ProductDetail() {
   const onZoomIn  = useCallback(() => setZoomLevel((z) => Math.min(z + 0.5, 3)), []);
   const onZoomOut = useCallback(() => setZoomLevel((z) => Math.max(z - 0.5, 1)), []);
 
+  // ── Fullscreen ─────────────────────────────
+  const openFullscreen  = useCallback(() => { setIsFullscreen(true);  setZoomLevel(1); setDragOffset(0); }, []);
+  const closeFullscreen = useCallback(() => { setIsFullscreen(false); setZoomLevel(1); setDragOffset(0); }, []);
+
   // ── Cart ───────────────────────────────────
   const handleAddToCart = useCallback(() => {
     console.log("Add to cart:", { product, quantity, selectedColor, selectedSize });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   }, [product, quantity, selectedColor, selectedSize]);
-
-  const closeFullscreen = useCallback(() => {
-    setIsFullscreen(false);
-    setZoomLevel(1);
-    setDragOffset(0);
-  }, []);
-
-  const openFullscreen = useCallback(() => {
-    setIsFullscreen(true);
-    setZoomLevel(1);
-    setDragOffset(0);
-  }, []);
 
   // ── Computed ───────────────────────────────
   const discount = product
@@ -489,9 +494,7 @@ export default function ProductDetail() {
           <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center">
             <X className="w-9 h-9 text-green-400" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-            Product Not Found
-          </h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Product Not Found</h1>
           <p className="text-gray-500 max-w-sm text-sm sm:text-base">
             This product doesn&apos;t exist or may have been removed.
           </p>
@@ -513,7 +516,6 @@ export default function ProductDetail() {
     <>
       <style suppressHydrationWarning>{CSS_BASE}</style>
 
-      {/* ── Fullscreen Modal (portal-like, rendered at root) ── */}
       {isFullscreen && (
         <FullscreenModal
           images={allImages}
@@ -566,17 +568,54 @@ export default function ProductDetail() {
                   onTouchMove={onTouchMove}
                   onTouchEnd={onTouchEnd}
                 >
+                  {/*
+                    Main hero image:
+                    - `fill` within a positioned parent (aspect-square + relative)
+                    - `priority` — LCP candidate, skip lazy loading
+                    - `sizes` matches actual render widths at each breakpoint
+                    - `quality={85}` — good quality/size balance for product photos
+                  */}
                   <Image
                     src={allImages[selectedImage]}
                     alt={product.name}
                     fill
+                    priority
+                    quality={85}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"
                     className="pd-gallery-img object-cover"
-                    priority
                   />
 
+                  {/*
+                    Preload the next and previous images invisibly so swiping feels instant.
+                    We use `loading="eager"` on adjacent images only.
+                  */}
+                  {allImages.length > 1 && (
+                    <>
+                      <Image
+                        key={`pre-next-${(selectedImage + 1) % allImages.length}`}
+                        src={allImages[(selectedImage + 1) % allImages.length]}
+                        alt=""
+                        fill
+                        aria-hidden="true"
+                        className="opacity-0 pointer-events-none"
+                        sizes="1px"
+                        loading="eager"
+                      />
+                      <Image
+                        key={`pre-prev-${(selectedImage - 1 + allImages.length) % allImages.length}`}
+                        src={allImages[(selectedImage - 1 + allImages.length) % allImages.length]}
+                        alt=""
+                        fill
+                        aria-hidden="true"
+                        className="opacity-0 pointer-events-none"
+                        sizes="1px"
+                        loading="eager"
+                      />
+                    </>
+                  )}
+
                   {/* Expand hint overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center pointer-events-none">
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 text-white rounded-full p-3 backdrop-blur-sm">
                       <Expand size={20} />
                     </div>
@@ -619,18 +658,25 @@ export default function ProductDetail() {
                         key={i}
                         type="button"
                         aria-label={`View image ${i + 1}`}
-                        onClick={() => { setSelectedImage(i); }}
+                        onClick={() => setSelectedImage(i)}
                         className={`pd-thumb shrink-0 relative w-20 h-24 rounded-xl overflow-hidden border-2 transition-all ${
                           selectedImage === i
                             ? "border-green-500 ring-2 ring-green-200"
                             : "border-gray-200 hover:border-green-300"
                         }`}
                       >
+                        {/*
+                          Thumbnails: explicit w/h (80×96 px logical, 2× for retina = 160×192).
+                          `loading="lazy"` for all but the first visible thumbnail.
+                          `quality={70}` — smaller size acceptable for 80px thumbs.
+                        */}
                         <Image
                           src={img}
                           alt={`${product.name} thumbnail ${i + 1}`}
                           fill
                           sizes="80px"
+                          quality={70}
+                          loading={i === 0 ? "eager" : "lazy"}
                           className="object-cover"
                         />
                       </button>
@@ -675,7 +721,7 @@ export default function ProductDetail() {
                 </div>
 
                 {/* Color selector */}
-                {product.colors && product.colors.length > 0 && (
+                {product.colors?.length > 0 && (
                   <div>
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
                       Color:{" "}
@@ -717,7 +763,7 @@ export default function ProductDetail() {
                 )}
 
                 {/* Size selector */}
-                {product.sizes && product.sizes.length > 0 && (
+                {product.sizes?.length > 0 && (
                   <div>
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
                       Size
@@ -851,11 +897,10 @@ export default function ProductDetail() {
 // ─────────────────────────────────────────────
 // Styles
 //
-// IMPORTANT — add to next.config.ts:
+// next.config.ts — add image hostname:
 //   images: {
 //     remotePatterns: [
 //       { protocol: "https", hostname: "my-shop-t2x7.vercel.app" },
-//       // add any other image hostnames your API returns
 //     ],
 //   },
 // ─────────────────────────────────────────────
@@ -929,18 +974,15 @@ const CSS_BASE = `
      FULLSCREEN MODAL
   ════════════════════════════════════════════ */
 
-  /* Blurred backdrop — covers entire viewport, always on top */
   .fs-backdrop {
     position: fixed;
     inset: 0;
     z-index: 9999;
     display: flex;
     flex-direction: column;
-    /* Frosted glass dark backdrop */
     background: rgba(0, 0, 0, 0.88);
     backdrop-filter: blur(18px) saturate(0.6);
     -webkit-backdrop-filter: blur(18px) saturate(0.6);
-    /* Fade in */
     animation: fs-fadein 0.22s ease;
   }
   @keyframes fs-fadein {
@@ -948,7 +990,6 @@ const CSS_BASE = `
     to   { opacity: 1; }
   }
 
-  /* ── Top control bar — fixed height, always visible ── */
   .fs-topbar {
     flex-shrink: 0;
     height: 64px;
@@ -957,7 +998,6 @@ const CSS_BASE = `
     justify-content: space-between;
     padding: 0 16px;
     gap: 12px;
-    /* Subtle gradient so it stays readable over any image */
     background: linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%);
     z-index: 10;
     margin-top: 59px;
@@ -966,11 +1006,7 @@ const CSS_BASE = `
     .fs-topbar { padding: 0 28px; height: 72px; }
   }
 
-  .fs-controls-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  .fs-controls-left { display: flex; align-items: center; gap: 8px; }
 
   .fs-zoom-label {
     color: rgba(255,255,255,0.5);
@@ -989,60 +1025,51 @@ const CSS_BASE = `
     transform: translateX(-50%);
   }
 
-  /* ── Icon buttons inside modal ── */
   .fs-icon-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px;
+    border-radius: 50%; border: none; cursor: pointer;
     color: #fff;
     background: rgba(255,255,255,0.12);
     backdrop-filter: blur(8px);
     transition: background 0.15s, transform 0.12s;
     flex-shrink: 0;
   }
-  .fs-icon-btn:hover {
-    background: rgba(255,255,255,0.22);
-    transform: scale(1.08);
-  }
+  .fs-icon-btn:hover { background: rgba(255,255,255,0.22); transform: scale(1.08); }
   .fs-icon-btn:active { transform: scale(0.95); }
-
-  /* Close button — red on hover */
   .fs-close-btn:hover { background: rgba(220,38,38,0.75) !important; }
 
-  /* ── Image area — fills remaining space ── */
+  /* Image area — fills remaining vertical space */
   .fs-image-area {
     flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
-    touch-action: pan-y;
-    user-select: none;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    touch-action: pan-y; user-select: none;
   }
 
-  /* ── The image itself ── */
   .fs-img-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     will-change: transform;
   }
-  .fs-img {
-    max-width: min(90vw, 900px);
-    max-height: calc(100vh - 180px);
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    border-radius: 12px;
-    box-shadow: 0 32px 80px rgba(0,0,0,0.5);
-    pointer-events: none;
-    /* Subtle appear animation */
+
+  /*
+    Container for next/image inside fullscreen.
+    We give it explicit dimensions so next/image fill works correctly.
+    CSS clamps the box to viewport safe area.
+  */
+  .fs-img-container {
+    position: relative;
+    width: min(90vw, 900px);
+    /* Maintain aspect by capping height; next/image fill covers the box */
+    height: calc(100vh - 220px);
+    max-height: 800px;
+  }
+
+  /* next/image renders an <img> inside the container; match the old .fs-img styles */
+  .fs-img-container img {
+    border-radius: 12px !important;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.5) !important;
+    object-fit: contain !important;
     animation: fs-imgappear 0.25s ease;
   }
   @keyframes fs-imgappear {
@@ -1050,29 +1077,14 @@ const CSS_BASE = `
     to   { opacity: 1; transform: scale(1); }
   }
 
-  /* ── Prev / Next arrow buttons ── */
   .fs-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    color: #fff;
-    background: rgba(255,255,255,0.12);
-    backdrop-filter: blur(8px);
+    position: absolute; top: 50%; transform: translateY(-50%);
+    z-index: 5; display: flex; align-items: center; justify-content: center;
+    width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer;
+    color: #fff; background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
     transition: background 0.15s, transform 0.15s;
   }
-  .fs-arrow:hover {
-    background: rgba(255,255,255,0.25);
-    transform: translateY(-50%) scale(1.1);
-  }
+  .fs-arrow:hover { background: rgba(255,255,255,0.25); transform: translateY(-50%) scale(1.1); }
   .fs-arrow:active { transform: translateY(-50%) scale(0.95); }
   .fs-arrow-left  { left: 12px; }
   .fs-arrow-right { right: 12px; }
@@ -1082,80 +1094,42 @@ const CSS_BASE = `
     .fs-arrow-right { right: 20px; }
   }
 
-  /* ── Bottom strip ── */
   .fs-bottom {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    flex-shrink: 0; display: flex; flex-direction: column;
+    align-items: center; gap: 10px;
     padding: 12px 16px 20px;
     background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
   }
-  @media (min-width: 640px) {
-    .fs-bottom { padding: 16px 24px 28px; gap: 12px; }
-  }
+  @media (min-width: 640px) { .fs-bottom { padding: 16px 24px 28px; gap: 12px; } }
 
-  /* Dot indicators */
-  .fs-dots {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  .fs-dots { display: flex; align-items: center; gap: 8px; }
   .fs-dot {
-    width: 8px; height: 8px;
-    border-radius: 9999px;
-    border: none;
-    cursor: pointer;
-    background: rgba(255,255,255,0.35);
-    transition: all 0.2s ease;
-    padding: 0;
+    width: 8px; height: 8px; border-radius: 9999px; border: none;
+    cursor: pointer; background: rgba(255,255,255,0.35);
+    transition: all 0.2s ease; padding: 0;
   }
   .fs-dot:hover { background: rgba(255,255,255,0.65); }
-  .fs-dot-active {
-    width: 24px;
-    background: #4ade80 !important; /* green-400 */
-    box-shadow: 0 0 8px rgba(74,222,128,0.6);
-  }
+  .fs-dot-active { width: 24px; background: #4ade80 !important; box-shadow: 0 0 8px rgba(74,222,128,0.6); }
 
-  /* Thumbnail strip */
   .fs-thumbs {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    max-width: 100%;
-    padding-bottom: 2px;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    display: flex; gap: 8px; overflow-x: auto; max-width: 100%;
+    padding-bottom: 2px; -ms-overflow-style: none; scrollbar-width: none;
   }
   .fs-thumbs::-webkit-scrollbar { display: none; }
 
   .fs-thumb-btn {
-    flex-shrink: 0;
-    width: 52px;
-    height: 60px;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: all 0.18s ease;
-    opacity: 0.55;
-    padding: 0;
-    background: none;
+    flex-shrink: 0; width: 52px; height: 60px; border-radius: 10px;
+    overflow: hidden; border: 2px solid transparent; cursor: pointer;
+    transition: all 0.18s ease; opacity: 0.55; padding: 0; background: none;
   }
   .fs-thumb-btn:hover { opacity: 0.85; transform: translateY(-2px); }
-  .fs-thumb-active {
-    border-color: #4ade80 !important;
-    opacity: 1 !important;
-    box-shadow: 0 0 0 2px rgba(74,222,128,0.4);
+  .fs-thumb-active { border-color: #4ade80 !important; opacity: 1 !important; box-shadow: 0 0 0 2px rgba(74,222,128,0.4); }
+
+  /* next/image renders inside the thumb button */
+  .fs-thumb-btn img {
+    width: 100% !important; height: 100% !important;
+    object-fit: cover !important; display: block !important;
   }
-  .fs-thumb-img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-    pointer-events: none;
-  }
-  @media (min-width: 640px) {
-    .fs-thumb-btn { width: 64px; height: 74px; }
-  }
+
+  @media (min-width: 640px) { .fs-thumb-btn { width: 64px; height: 74px; } }
 `;

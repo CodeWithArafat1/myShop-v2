@@ -7,7 +7,7 @@ interface CategoryCardProps {
   href?: string;
 }
 
-export function CategoryCard({ title, count, image, href = "/shop" }: CategoryCardProps) {
+export function CategoryCard({ title, count, image, href = "/product" }: CategoryCardProps) {
   return (
     <a href={href} className="block w-full group">
       <div className="relative w-full aspect-3/4 sm:aspect-4/5 rounded-[20px] overflow-hidden shadow-sm hover:shadow-sm shadow-green-100/80 transition-shadow duration-300 border border-black/5">

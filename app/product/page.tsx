@@ -280,7 +280,7 @@ function ShopContent() {
                  variant="outline" 
                  onClick={() => {
                    setFilters({ categories: [], priceRange: [0, 50000], colors: [], search: "" });
-                   router.push("/shop");
+                   router.push("/product");
                  }} 
                >
                  Clear all filters

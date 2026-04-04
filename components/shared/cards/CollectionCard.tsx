@@ -14,12 +14,12 @@ interface CollectionCardProps {
 export function CollectionCard({ collection, index }: CollectionCardProps) {
   return (
     <Link
-      href={`/shop?category=${encodeURIComponent(collection.name)}`}
+      href={`/product?category=${encodeURIComponent(collection.name)}`}
       className="group relative block w-full focus:outline-none focus:ring-4 focus:ring-green-500/50 rounded-3xl"
       aria-label={`Go to ${collection.name} collection having ${collection.count} items`}
     >
       {/* Image Container with CLS Protection */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl md:rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 border border-stone-200/50 dark:border-stone-800/50 bg-stone-100 dark:bg-stone-900">
+      <div className="relative aspect-3/4 w-full overflow-hidden rounded-2xl md:rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 border border-stone-200/50 dark:border-stone-800/50 bg-stone-100 dark:bg-stone-900">
         
         {/* Performance Optimized Image */}
         <Image
@@ -35,13 +35,12 @@ export function CollectionCard({ collection, index }: CollectionCardProps) {
 
         {/* Gradient Overlay for Text Contrast (Accessibility) */}
         <div 
-          className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity duration-500" 
+          className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity duration-500" 
           aria-hidden="true" 
         />
 
-        {/* Glassmorphism Content Bar */}
         <div className="absolute inset-x-3 bottom-3 md:inset-x-4 md:bottom-4">
-          <div className="overflow-hidden rounded-xl md:rounded-2xl bg-white/10 dark:bg-black/60 backdrop-blur-md border border-white/20 dark:border-white/10 p-3 md:p-4 shadow-lg transition-transform duration-500 group-hover:translate-y-[-4px]">
+          <div className="overflow-hidden rounded-xl md:rounded-2xl bg-white/10 dark:bg-black/60 backdrop-blur-md border border-white/20 dark:border-white/10 p-3 md:p-4 shadow-lg transition-transform duration-500 group-hover:-translate-y-1">
             
             <div className="flex justify-between items-center">
               <div className="min-w-0">
@@ -60,7 +59,7 @@ export function CollectionCard({ collection, index }: CollectionCardProps) {
             </div>
             
             {/* CSS-only Shimmer Effect */}
-            <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-white/10 to-transparent z-10 pointer-events-none" />
           </div>
         </div>
 

@@ -96,7 +96,7 @@ export default function CollectionsPage() {
           
           {/* High Contrast Link for Accessibility */}
           <Link 
-            href="/shop" 
+            href="/product" 
             aria-label="View all products in shop"
             className="group flex items-center gap-2 text-sm font-bold text-stone-900 dark:text-white border-b-2 border-stone-300 dark:border-stone-700 pb-1 hover:border-green-600 dark:hover:border-green-500 hover:text-green-600 dark:hover:text-green-400 transition-all"
           >
@@ -113,7 +113,7 @@ export default function CollectionsPage() {
             Array.from({ length: 4 }).map((_, i) => (
               <div 
                 key={i} 
-                className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden bg-stone-200 dark:bg-stone-800 animate-pulse" 
+                className="relative aspect-3/4 w-full rounded-2xl overflow-hidden bg-stone-200 dark:bg-stone-800 animate-pulse" 
               />
             ))
           ) : collections.length > 0 ? (
