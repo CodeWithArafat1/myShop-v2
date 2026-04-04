@@ -2,11 +2,13 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Search, Package, Truck, CheckCircle2, Clock, MapPin, Phone, Hash, ArrowRight, Loader2, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 // --- Interfaces ---
 interface OrderItem {
@@ -42,7 +44,6 @@ function TrackOrderContent() {
   // Load history from local storage (Using "my_orders" key)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Checkout page e jodi "my_orders" name save kora thake, tahole ekhane show korbe
       const localHistory = JSON.parse(localStorage.getItem("my_orders") || "[]");
       setOrderHistory(localHistory.reverse());
 
@@ -152,11 +153,11 @@ function TrackOrderContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      
+    <div className="min-h-screen">
+     
 
       {/* Hero & Search Section */}
-      <section className="pt-28 pb-10 sm:pt-36 sm:pb-16 bg-gradient-to-b from-primary/5 to-background">
+      <section className="pt-28 pb-10 sm:pt-36 sm:pb-16 bg-transparent">
         <div className="container-main px-4 text-center max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
             <Truck className="w-4 h-4" />
@@ -245,7 +246,7 @@ function TrackOrderContent() {
                     className="flex items-center gap-2 bg-muted hover:bg-primary/10 border border-transparent hover:border-primary/30 px-4 py-2 rounded-lg text-sm font-medium text-foreground hover:text-primary transition-all"
                   >
                     <Hash className="w-3.5 h-3.5 opacity-50" />
-                    {id.slice(-6).toUpperCase()} {/* Shows last 6 chars of ID for clean UI */}
+                    {id.slice(-6).toUpperCase()}
                     <ArrowRight className="w-3.5 h-3.5 opacity-50 ml-1" />
                   </button>
                 ))}
@@ -374,9 +375,11 @@ function TrackOrderContent() {
                     <p className="font-bold text-foreground text-base">Need help with this order?</p>
                     <p className="text-sm text-muted-foreground mt-0.5">Our support team is here for you 24/7</p>
                   </div>
-                  <Button className="gap-1.5 shrink-0 w-full sm:w-auto">
-                    Contact Us <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  <Link href="/contact" className="w-full sm:w-auto">
+                    <Button className="gap-1.5 shrink-0 w-full sm:w-auto">
+                      Contact Us <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
 
@@ -385,7 +388,7 @@ function TrackOrderContent() {
         </div>
       </section>
 
-     
+    
     </div>
   );
 }
@@ -394,7 +397,7 @@ function TrackOrderContent() {
 export default function TrackOrder() {
   return (
     <Suspense fallback={
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+      <div className="flex flex-col items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="mt-4 text-sm text-muted-foreground animate-pulse">Loading tracking system...</p>
       </div>
