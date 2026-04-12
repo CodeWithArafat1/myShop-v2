@@ -5,16 +5,18 @@ import { GradientBackground } from "@/components/GradientBackground";
 import Footer from "@/components/shared/Footer";
 import SmoothScrolling from "@/components/SmoothScrolling";
 import Navbar from "@/components/shared/Navbar";
+import { CartProvider } from "@/contexts/CartContext";
+import CartDrawer from "@/components/CartDrawer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-const hindSiliguri = Hind_Siliguri({ 
-  subsets: ['bengali'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-hind',
+const hindSiliguri = Hind_Siliguri({
+  subsets: ["bengali"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-hind",
 });
 
 const geistMono = Geist_Mono({
@@ -38,13 +40,16 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased ${hindSiliguri.className}`}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar />
-        <GradientBackground />
+        <CartProvider>
+          <Navbar />
+          <GradientBackground />
 
-        <SmoothScrolling>
-          <main className="relative z-0">{children}</main>
-        </SmoothScrolling>
-        <Footer />
+          <SmoothScrolling>
+            <main className="relative z-0">{children}</main>
+          </SmoothScrolling>
+          <Footer />
+          <CartDrawer />
+        </CartProvider>
       </body>
     </html>
   );

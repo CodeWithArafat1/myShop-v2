@@ -11,7 +11,7 @@ export default function SmoothScrolling({
     <ReactLenis
       root
       options={{
-        lerp: 0.07,
+        lerp: 0.1,
         wheelMultiplier: 1,
       }}
     >

@@ -26,6 +26,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+import { useCart } from "@/contexts/CartContext";  
+
 // --- TypeScript Interfaces ---
 interface Product {
   _id?: string;
@@ -49,8 +51,11 @@ const NAV_LINKS = [
 export default function Navbar() {
   const router = useRouter();
 
-  // Temporary Static Cart Count
-  const cartItemCount = 5;
+  // --- Cart Context Integration ---
+  const { cart, setIsOpen, isLoading: isCartLoading } = useCart();
+  
+  // রিয়েল-টাইম কার্ট আইটেম কাউন্ট (quantity যোগ করে)
+  const totalItems = cart.reduce((total: number, item: any) => total + item.quantity, 0);
 
   // --- States ---
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -85,17 +90,15 @@ export default function Navbar() {
     const fetchResults = async () => {
       setIsLoading(true);
       try {
-        // Connected directly to your live API
         const apiUrl = "https://my-shop-t2x7.vercel.app/api/products";
         const res = await fetch(apiUrl, { signal });
         const data = await res.json();
 
-        // Ensure we get the correct array format
         const productsArray = Array.isArray(data) ? data : data?.data || data?.products || [];
 
         const filtered = productsArray.filter((product: Product) =>
           product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-          product.category.toLowerCase().includes(searchQuery.toLowerCase()) // Also searches by category
+          product.category.toLowerCase().includes(searchQuery.toLowerCase())
         );
         setSearchResults(filtered.slice(0, 5));
       } catch (error) {
@@ -120,7 +123,7 @@ export default function Navbar() {
   const handleSearchNavigation = (productId: string) => {
     setIsSearchOpen(false);
     setSearchQuery("");
-    router.push(`/product/${productId}`); // Navigates to product detail page
+    router.push(`/product/${productId}`);
   };
 
   const handleViewAllResults = () => {
@@ -129,7 +132,6 @@ export default function Navbar() {
     setSearchQuery("");
   };
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [router]);
@@ -273,17 +275,19 @@ export default function Navbar() {
               <span className="sr-only">Account</span>
             </Button>
 
-            {/* Cart Button */}
+            {/* --- Updated Cart Button --- */}
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => setIsOpen(true)} // এখানে ক্লিক করলে Drawer ওপেন হবে
               className="relative hover:text-[#16a34a] hover:bg-[#16a34a]/10"
             >
               <ShoppingCart className="h-5 w-5" />
               <span className="sr-only">Cart</span>
-              {cartItemCount > 0 && (
+              {/* Context থেকে আসা রিয়েল-টাইম ডেটা এবং Hydration error ফিক্স */}
+              {!isCartLoading && totalItems > 0 && (
                 <span className="absolute 0 top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-in zoom-in-50">
-                  {cartItemCount}
+                  {totalItems}
                 </span>
               )}
             </Button>
