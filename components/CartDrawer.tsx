@@ -1,12 +1,17 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCart } from "@/contexts/CartContext";
-import Link from "next/link";
 
 export default function CartDrawer() {
   const { cart, removeFromCart, updateQuantity, isOpen, setIsOpen, cartTotal } = useCart();
@@ -29,7 +34,11 @@ export default function CartDrawer() {
             <p className="text-muted-foreground text-sm max-w-xs">
               Looks like you haven't added anything yet.
             </p>
-            <Button onClick={() => setIsOpen(false)} variant="outline" className="mt-4">
+            <Button
+              onClick={() => setIsOpen(false)}
+              variant="outline"
+              className="mt-4"
+            >
               Continue Shopping
             </Button>
           </div>
@@ -38,17 +47,33 @@ export default function CartDrawer() {
             <ScrollArea className="flex-1">
               <div className="p-6 space-y-6">
                 {cart.map((item, index) => (
-                  <div key={`${item.id}-${item.selectedColor}-${item.selectedSize}-${index}`} className="flex gap-4 group">
+                  <div
+                    key={`${item.id}-${item.selectedColor}-${item.selectedSize}-${index}`}
+                    className="flex gap-4 group"
+                  >
                     <div className="relative h-24 w-20 rounded-lg overflow-hidden border bg-gray-50 shrink-0">
-                      <Image src={item.image} alt={item.name} fill className="object-cover" />
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
 
                     <div className="flex-1 flex flex-col justify-between py-1">
                       <div>
                         <div className="flex justify-between items-start gap-2">
-                          <h4 className="font-medium text-sm leading-tight line-clamp-2">{item.name}</h4>
+                          <h4 className="font-medium text-sm leading-tight line-clamp-2">
+                            {item.name}
+                          </h4>
                           <button
-                            onClick={() => removeFromCart(item.id, item.selectedColor, item.selectedSize)}
+                            onClick={() =>
+                              removeFromCart(
+                                item.id,
+                                item.selectedColor,
+                                item.selectedSize
+                              )
+                            }
                             className="text-gray-400 hover:text-red-500 transition-colors p-1 -mr-2 -mt-1"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -58,7 +83,14 @@ export default function CartDrawer() {
                         <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
                           {item.selectedColor && (
                             <span className="flex items-center gap-1">
-                              Color: <span className="w-2 h-2 rounded-full inline-block border" style={{ backgroundColor: item.selectedColor.toLowerCase() }}></span> {item.selectedColor}
+                              Color:{" "}
+                              <span
+                                className="w-2 h-2 rounded-full inline-block border"
+                                style={{
+                                  backgroundColor: item.selectedColor.toLowerCase(),
+                                }}
+                              ></span>{" "}
+                              {item.selectedColor}
                             </span>
                           )}
                           {item.selectedSize && (
@@ -73,20 +105,38 @@ export default function CartDrawer() {
                       <div className="flex justify-between items-end mt-3">
                         <div className="flex items-center border rounded-md h-7">
                           <button
-                            onClick={() => updateQuantity(item.id, item.selectedColor, item.selectedSize, "minus")}
+                            onClick={() =>
+                              updateQuantity(
+                                item.id,
+                                item.selectedColor,
+                                item.selectedSize,
+                                "minus"
+                              )
+                            }
                             className="w-7 h-full flex items-center justify-center hover:bg-muted transition-colors"
                           >
                             <Minus className="h-3 w-3" />
                           </button>
-                          <span className="w-8 text-center text-xs font-semibold">{item.quantity}</span>
+                          <span className="w-8 text-center text-xs font-semibold">
+                            {item.quantity}
+                          </span>
                           <button
-                            onClick={() => updateQuantity(item.id, item.selectedColor, item.selectedSize, "plus")}
+                            onClick={() =>
+                              updateQuantity(
+                                item.id,
+                                item.selectedColor,
+                                item.selectedSize,
+                                "plus"
+                              )
+                            }
                             className="w-7 h-full flex items-center justify-center hover:bg-muted transition-colors"
                           >
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
-                        <div className="font-bold text-sm">৳{(item.price * item.quantity).toLocaleString()}</div>
+                        <div className="font-bold text-sm">
+                          ৳{(item.price * item.quantity).toLocaleString()}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -98,16 +148,27 @@ export default function CartDrawer() {
               <div className="space-y-2">
                 <div className="flex justify-between text-base font-semibold text-foreground">
                   <span>Subtotal</span>
-                  <span>৳{cartTotal.toLocaleString()}</span>
+                  <span>৳{cartTotal?.toLocaleString() || 0}</span>
                 </div>
-                <p className="text-xs text-muted-foreground">Shipping and taxes calculated at checkout.</p>
+                <p className="text-xs text-muted-foreground">
+                  Shipping and taxes calculated at checkout.
+                </p>
               </div>
 
-              <Button className="w-full h-12 text-base" asChild onClick={() => setIsOpen(false)}>
+              <Button
+                className="w-full h-12 text-base"
+                asChild
+                onClick={() => setIsOpen(false)}
+              >
                 <Link href="/checkout">Check Out</Link>
               </Button>
 
-              <Button variant="outline" className="w-full h-12 text-base" asChild onClick={() => setIsOpen(false)}>
+              <Button
+                variant="outline"
+                className="w-full h-12 text-base"
+                asChild
+                onClick={() => setIsOpen(false)}
+              >
                 <Link href="/cart">View Cart</Link>
               </Button>
             </div>
