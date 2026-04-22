@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   ShoppingCart,
   User,
@@ -15,6 +15,7 @@ import {
   Loader2,
   Menu,
   X,
+  ChevronDown,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-import { useCart } from "@/contexts/CartContext";  
+import { useCart } from "@/contexts/CartContext";
 
 // --- TypeScript Interfaces ---
 interface Product {
@@ -38,33 +39,47 @@ interface Product {
   image: string;
 }
 
-// --- Static Data ---
-const NAV_LINKS = [
+interface NavLink {
+  name: string;
+  href: string;
+  icon: any;
+  subLinks?: { name: string; href: string }[];
+}
+
+// --- Base Static Links (Without Collections SubLinks initially) ---
+const BASE_NAV_LINKS = [
   { name: "Home", href: "/", icon: Home },
   { name: "Shop", href: "/product", icon: ShoppingBag },
-  { name: "Collections", href: "/collections", icon: Sparkles },
+  { name: "Collections", href: "/collections", icon: Sparkles }, // SubLinks will be injected dynamically
   { name: "My Order", href: "/track-order", icon: ShoppingBag },
   { name: "Contact", href: "/contact", icon: Info },
   { name: "About Us", href: "/about", icon: Info },
 ];
 
-export default function Navbar() {
+export default function DropNavbar() {
   const router = useRouter();
+  
+  // --- Active Link Tracking ---
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentCategory = searchParams ? searchParams.get("category") : null;
 
   // --- Cart Context Integration ---
   const { cart, setIsOpen, isLoading: isCartLoading } = useCart();
-  
- 
   const totalItems = cart.reduce((total: number, item: any) => total + item.quantity, 0);
 
   // --- States ---
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeMobileDropdown, setActiveMobileDropdown] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
+  
+  // --- Dynamic Collections State ---
+  const [dynamicCategories, setDynamicCategories] = useState<{ name: string; href: string }[]>([]);
 
-  // --- Global Keyboard Shortcut for Search (Ctrl+K / Cmd+K) ---
+  // --- Global Keyboard Shortcut for Search ---
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -76,11 +91,11 @@ export default function Navbar() {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  // --- Real-time Search Logic with AbortController ---
+  // --- Real-time Search Logic ---
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
-      setIsLoading(false);
+      setIsLoadingSearch(false);
       return;
     }
 
@@ -88,12 +103,11 @@ export default function Navbar() {
     const signal = controller.signal;
 
     const fetchResults = async () => {
-      setIsLoading(true);
+      setIsLoadingSearch(true);
       try {
         const apiUrl = "https://my-shop-t2x7.vercel.app/api/products";
         const res = await fetch(apiUrl, { signal });
         const data = await res.json();
-
         const productsArray = Array.isArray(data) ? data : data?.data || data?.products || [];
 
         const filtered = productsArray.filter((product: Product) =>
@@ -102,24 +116,66 @@ export default function Navbar() {
         );
         setSearchResults(filtered.slice(0, 5));
       } catch (error) {
-        if (error instanceof Error) {
-          if (error.name !== "AbortError") {
-            console.error("Search error:", error.message);
-          }
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Search error:", error.message);
         }
       } finally {
-        setIsLoading(false);
+        setIsLoadingSearch(false);
       }
     };
 
     const delayDebounceFn = setTimeout(fetchResults, 300);
-
     return () => {
       clearTimeout(delayDebounceFn);
       controller.abort();
     };
   }, [searchQuery]);
 
+  // --- Dynamic Categories Fetching (Optimized with Session Storage) ---
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const cachedData = sessionStorage.getItem("shop_products_cache");
+        let products = [];
+
+        if (cachedData) {
+          products = JSON.parse(cachedData);
+        } else {
+          const res = await fetch("https://my-shop-t2x7.vercel.app/api/products");
+          const data = await res.json();
+          products = Array.isArray(data) ? data : data?.data || data?.products || [];
+          
+          if (products.length > 0) {
+            sessionStorage.setItem("shop_products_cache", JSON.stringify(products));
+          }
+        }
+
+        const uniqueCategories = [...new Set(products.map((p: any) => p.category).filter(Boolean))];
+        const subLinks = uniqueCategories.map((cat: any) => ({
+          name: cat,
+          href: `/product?category=${encodeURIComponent(cat)}` 
+        }));
+
+        setDynamicCategories(subLinks);
+      } catch (error) {
+        console.error("Failed to load navbar categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // --- Merge Base Links with Dynamic Collections ---
+  const navLinks = useMemo(() => {
+    return BASE_NAV_LINKS.map(link => {
+      if (link.name === "Collections" && dynamicCategories.length > 0) {
+        return { ...link, subLinks: dynamicCategories };
+      }
+      return link;
+    });
+  }, [dynamicCategories]);
+
+  // --- Handlers ---
   const handleSearchNavigation = (productId: string) => {
     setIsSearchOpen(false);
     setSearchQuery("");
@@ -134,17 +190,18 @@ export default function Navbar() {
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
-  }, [router]);
+    setActiveMobileDropdown(null);
+  }, [pathname, searchParams]); // Close menu on route change
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
       <div className="container mx-auto px-4 md:px-8">
         <div className="flex h-16 items-center justify-between">
           
-          {/* 1. Logo & Mobile Menu Toggle */}
+          {/* Logo & Mobile Menu Toggle */}
           <div className="flex items-center gap-2 sm:gap-4">
             <button 
-              className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-primary transition-colors"
+              className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-[#16a34a] transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -156,35 +213,66 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* 2. Desktop Navigation (Hidden on Mobile) */}
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium absolute left-1/2 -translate-x-1/2">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className="transition-colors hover:text-[#16a34a] text-muted-foreground hover:font-semibold"
-              >
-                {link.name}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              // Check if main link is active
+              const isMainActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
+
+              return (
+                <div key={link.name} className="relative group">
+                  <Link
+                    href={link.href}
+                    className={`flex items-center gap-1.5 transition-colors hover:text-[#16a34a] py-6 ${
+                      isMainActive ? "text-[#16a34a] font-bold" : "text-muted-foreground hover:font-semibold"
+                    }`}
+                  >
+                    {link.name}
+                    {link.subLinks && link.subLinks.length > 0 && (
+                      <ChevronDown className="h-4 w-4 transition-transform duration-300 group-hover:-rotate-180" />
+                    )}
+                  </Link>
+
+                  {/* Pure CSS Zero-Lag Dropdown */}
+                  {link.subLinks && link.subLinks.length > 0 && (
+                    <div className="absolute left-1/2 -translate-x-1/2 top-[calc(100%-0.5rem)] w-48 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300 ease-out z-50">
+                      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-2 flex flex-col gap-1 mt-1 relative before:absolute before:-top-2 before:left-0 before:w-full before:h-4 max-h-80 overflow-y-auto">
+                        {link.subLinks.map((subLink) => {
+                          // Check if sublink (category) is active
+                          const isSubLinkActive = currentCategory === subLink.name;
+                          
+                          return (
+                            <Link
+                              key={subLink.name}
+                              href={subLink.href}
+                              className={`px-3 py-2 text-sm hover:text-[#16a34a] hover:bg-[#16a34a]/10 hover:font-medium rounded-lg transition-all capitalize ${
+                                isSubLinkActive ? "text-[#16a34a] bg-[#16a34a]/10 font-bold" : "text-gray-600"
+                              }`}
+                            >
+                              {subLink.name}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
 
-          {/* 3. Actions (Search, User, Cart) */}
+          {/* Actions (Search, User, Cart) */}
           <div className="flex items-center gap-1 sm:gap-4">
-            
-            {/* Global Real-Time Search Dialog */}
+            {/* Search Dialog */}
             <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
               <DialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:text-[#16a34a] hover:bg-[#16a34a]/10"
-                >
+                <Button variant="ghost" size="icon" className="hover:text-[#16a34a] hover:bg-[#16a34a]/10">
                   <Search className="h-5 w-5" />
                   <span className="sr-only">Search</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[550px] top-[15%] translate-y-0 gap-0 p-0 outline-none overflow-hidden rounded-xl">
+                {/* Search dialog content kept unchanged */}
                 <DialogHeader className="sr-only">
                   <DialogTitle>Search Products</DialogTitle>
                 </DialogHeader>
@@ -198,12 +286,12 @@ export default function Navbar() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
                   />
-                  {!isLoading && !searchQuery && (
+                  {!isLoadingSearch && !searchQuery && (
                     <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                       <span className="text-xs">⌘</span>K
                     </kbd>
                   )}
-                  {isLoading && (
+                  {isLoadingSearch && (
                     <Loader2 className="h-5 w-5 animate-spin text-[#16a34a]" />
                   )}
                 </div>
@@ -234,7 +322,7 @@ export default function Navbar() {
                               <p className="truncate text-sm font-bold text-gray-900 group-hover:text-[#16a34a] transition-colors">
                                 {product.name}
                               </p>
-                              <p className="text-xs text-gray-500 truncate mt-0.5">
+                              <p className="text-xs text-gray-500 truncate mt-0.5 capitalize">
                                 {product.category}
                               </p>
                             </div>
@@ -252,7 +340,7 @@ export default function Navbar() {
                         </Button>
                       </div>
                     ) : (
-                      !isLoading && (
+                      !isLoadingSearch && (
                         <div className="py-14 text-center">
                           <Search className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                           <p className="text-sm font-medium text-gray-900">No results found</p>
@@ -265,26 +353,21 @@ export default function Navbar() {
               </DialogContent>
             </Dialog>
 
-            {/* User Profile (Hidden on very small screens) */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden sm:flex hover:text-[#16a34a] hover:bg-[#16a34a]/10"
-            >
+            {/* User Profile */}
+            <Button variant="ghost" size="icon" className="hidden sm:flex hover:text-[#16a34a] hover:bg-[#16a34a]/10">
               <User className="h-5 w-5" />
               <span className="sr-only">Account</span>
             </Button>
 
-            {/* --- Updated Cart Button --- */}
+            {/* Cart Button */}
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsOpen(true)} // এখানে ক্লিক করলে Drawer ওপেন হবে
+              onClick={() => setIsOpen(true)}
               className="relative hover:text-[#16a34a] hover:bg-[#16a34a]/10"
             >
               <ShoppingCart className="h-5 w-5" />
               <span className="sr-only">Cart</span>
-              {/* Context থেকে আসা রিয়েল-টাইম ডেটা এবং Hydration error ফিক্স */}
               {!isCartLoading && totalItems > 0 && (
                 <span className="absolute 0 top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-in zoom-in-50">
                   {totalItems}
@@ -295,31 +378,79 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* --- Mobile Navigation Menu (Slide Down Overlay) --- */}
+      {/* Mobile Navigation Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-16 left-0 w-full bg-background border-b shadow-xl animate-in slide-in-from-top-2 flex flex-col z-40 max-h-[calc(100vh-4rem)] overflow-y-auto">
           <nav className="flex flex-col p-4 gap-2">
-            {NAV_LINKS.map((link) => {
+            {navLinks.map((link) => {
               const Icon = link.icon;
+              const hasSubLinks = link.subLinks && link.subLinks.length > 0;
+              const isOpen = activeMobileDropdown === link.name;
+              
+              // Check if main link is active (for Mobile)
+              const isMainActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
+
               return (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground rounded-xl hover:bg-[#16a34a]/10 hover:text-[#16a34a] transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Icon className="w-5 h-5 text-muted-foreground" />
-                  {link.name}
-                </Link>
+                <div key={link.name} className="flex flex-col">
+                  <div
+                    className={`flex items-center justify-between px-4 py-3 rounded-xl hover:bg-[#16a34a]/10 transition-colors cursor-pointer group ${
+                      isMainActive ? "bg-[#16a34a]/10" : ""
+                    }`}
+                    onClick={() => {
+                      if (hasSubLinks) {
+                        setActiveMobileDropdown(isOpen ? null : link.name);
+                      } else {
+                        router.push(link.href);
+                        setIsMobileMenuOpen(false);
+                      }
+                    }}
+                  >
+                    <div className={`flex items-center gap-3 text-sm font-medium group-hover:text-[#16a34a] ${isMainActive ? "text-[#16a34a]" : "text-foreground"}`}>
+                      <Icon className={`w-5 h-5 group-hover:text-[#16a34a] ${isMainActive ? "text-[#16a34a]" : "text-muted-foreground"}`} />
+                      {link.name}
+                    </div>
+                    {hasSubLinks && (
+                      <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180 text-[#16a34a]" : "text-muted-foreground"}`} />
+                    )}
+                  </div>
+
+                  {/* Mobile SubLinks Accordion */}
+                  {hasSubLinks && (
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-64 opacity-100 mt-1" : "max-h-0 opacity-0"}`}>
+                      <div className="flex flex-col gap-1 pl-12 pr-4 border-l-2 border-[#16a34a]/20 ml-6 py-1">
+                        {link.subLinks!.map((subLink) => {
+                          // Check if sublink (category) is active (Mobile)
+                          const isSubLinkActive = currentCategory === subLink.name;
+                          
+                          return (
+                            <Link
+                              key={subLink.name}
+                              href={subLink.href}
+                              className={`py-2 text-sm hover:text-[#16a34a] hover:font-medium transition-colors capitalize ${
+                                isSubLinkActive ? "text-[#16a34a] font-bold" : "text-muted-foreground"
+                              }`}
+                              onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                              {subLink.name}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
+            
             <div className="h-px bg-border my-2" />
             <Link
               href="/profile"
-              className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground rounded-xl hover:bg-[#16a34a]/10 hover:text-[#16a34a] transition-colors"
+              className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-[#16a34a]/10 hover:text-[#16a34a] transition-colors ${
+                pathname === "/profile" ? "bg-[#16a34a]/10 text-[#16a34a]" : "text-foreground"
+              }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <User className="w-5 h-5 text-muted-foreground" />
+              <User className={`w-5 h-5 ${pathname === "/profile" ? "text-[#16a34a]" : "text-muted-foreground"}`} />
               My Account
             </Link>
           </nav>

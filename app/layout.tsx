@@ -4,9 +4,9 @@ import "./globals.css";
 import { GradientBackground } from "@/components/GradientBackground";
 import Footer from "@/components/shared/Footer";
 import SmoothScrolling from "@/components/SmoothScrolling";
-import Navbar from "@/components/shared/Navbar";
 import { CartProvider } from "@/contexts/CartContext";
 import CartDrawer from "@/components/CartDrawer";
+import DropNavbar from "@/components/shared/DropNavbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,12 +41,13 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <CartProvider>
-          <Navbar />
+          {/* <Navbar /> */}
+          <DropNavbar/>
           <GradientBackground />
 
-          <SmoothScrolling>
+          {/* <SmoothScrolling> */}
             <main className="relative z-0">{children}</main>
-          </SmoothScrolling>
+          {/* </SmoothScrolling> */}
           <Footer />
           <CartDrawer />
         </CartProvider>
