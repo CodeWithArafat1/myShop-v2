@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
@@ -46,17 +46,16 @@ interface NavLink {
   subLinks?: { name: string; href: string }[];
 }
 
-// --- Base Static Links (Without Collections SubLinks initially) ---
-const BASE_NAV_LINKS = [
+const BASE_NAV_LINKS: NavLink[] = [
   { name: "Home", href: "/", icon: Home },
   { name: "Shop", href: "/product", icon: ShoppingBag },
-  { name: "Collections", href: "/collections", icon: Sparkles }, // SubLinks will be injected dynamically
+  { name: "Collections", href: "/collections", icon: Sparkles },
   { name: "My Order", href: "/track-order", icon: ShoppingBag },
   { name: "Contact", href: "/contact", icon: Info },
   { name: "About Us", href: "/about", icon: Info },
 ];
 
-export default function DropNavbar() {
+function NavbarContent() {
   const router = useRouter();
   
   // --- Active Link Tracking ---
@@ -131,7 +130,7 @@ export default function DropNavbar() {
     };
   }, [searchQuery]);
 
-  // --- Dynamic Categories Fetching (Optimized with Session Storage) ---
+  // --- Dynamic Categories Fetching ---
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -191,14 +190,13 @@ export default function DropNavbar() {
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setActiveMobileDropdown(null);
-  }, [pathname, searchParams]); // Close menu on route change
+  }, [pathname, searchParams]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
       <div className="container mx-auto px-4 md:px-8">
         <div className="flex h-16 items-center justify-between">
           
-          {/* Logo & Mobile Menu Toggle */}
           <div className="flex items-center gap-2 sm:gap-4">
             <button 
               className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-[#16a34a] transition-colors"
@@ -213,10 +211,8 @@ export default function DropNavbar() {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium absolute left-1/2 -translate-x-1/2">
             {navLinks.map((link) => {
-              // Check if main link is active
               const isMainActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
 
               return (
@@ -233,12 +229,10 @@ export default function DropNavbar() {
                     )}
                   </Link>
 
-                  {/* Pure CSS Zero-Lag Dropdown */}
                   {link.subLinks && link.subLinks.length > 0 && (
                     <div className="absolute left-1/2 -translate-x-1/2 top-[calc(100%-0.5rem)] w-48 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300 ease-out z-50">
                       <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-2 flex flex-col gap-1 mt-1 relative before:absolute before:-top-2 before:left-0 before:w-full before:h-4 max-h-80 overflow-y-auto">
                         {link.subLinks.map((subLink) => {
-                          // Check if sublink (category) is active
                           const isSubLinkActive = currentCategory === subLink.name;
                           
                           return (
@@ -261,9 +255,7 @@ export default function DropNavbar() {
             })}
           </nav>
 
-          {/* Actions (Search, User, Cart) */}
           <div className="flex items-center gap-1 sm:gap-4">
-            {/* Search Dialog */}
             <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon" className="hover:text-[#16a34a] hover:bg-[#16a34a]/10">
@@ -272,7 +264,6 @@ export default function DropNavbar() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[550px] top-[15%] translate-y-0 gap-0 p-0 outline-none overflow-hidden rounded-xl">
-                {/* Search dialog content kept unchanged */}
                 <DialogHeader className="sr-only">
                   <DialogTitle>Search Products</DialogTitle>
                 </DialogHeader>
@@ -353,13 +344,11 @@ export default function DropNavbar() {
               </DialogContent>
             </Dialog>
 
-            {/* User Profile */}
             <Button variant="ghost" size="icon" className="hidden sm:flex hover:text-[#16a34a] hover:bg-[#16a34a]/10">
               <User className="h-5 w-5" />
               <span className="sr-only">Account</span>
             </Button>
 
-            {/* Cart Button */}
             <Button
               variant="ghost"
               size="icon"
@@ -378,7 +367,6 @@ export default function DropNavbar() {
         </div>
       </div>
 
-      {/* Mobile Navigation Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-16 left-0 w-full bg-background border-b shadow-xl animate-in slide-in-from-top-2 flex flex-col z-40 max-h-[calc(100vh-4rem)] overflow-y-auto">
           <nav className="flex flex-col p-4 gap-2">
@@ -387,7 +375,6 @@ export default function DropNavbar() {
               const hasSubLinks = link.subLinks && link.subLinks.length > 0;
               const isOpen = activeMobileDropdown === link.name;
               
-              // Check if main link is active (for Mobile)
               const isMainActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
 
               return (
@@ -414,12 +401,10 @@ export default function DropNavbar() {
                     )}
                   </div>
 
-                  {/* Mobile SubLinks Accordion */}
                   {hasSubLinks && (
                     <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-64 opacity-100 mt-1" : "max-h-0 opacity-0"}`}>
                       <div className="flex flex-col gap-1 pl-12 pr-4 border-l-2 border-[#16a34a]/20 ml-6 py-1">
                         {link.subLinks!.map((subLink) => {
-                          // Check if sublink (category) is active (Mobile)
                           const isSubLinkActive = currentCategory === subLink.name;
                           
                           return (
@@ -457,5 +442,15 @@ export default function DropNavbar() {
         </div>
       )}
     </header>
+  );
+}
+
+// Ensure the default export wraps the inner component with Suspense.
+// This prevents Next.js build errors caused by useSearchParams() during static generation.
+export default function DropNavbar() {
+  return (
+    <Suspense fallback={<header className="h-16 w-full border-b bg-background/95 shadow-sm" />}>
+      <NavbarContent />
+    </Suspense>
   );
 }
