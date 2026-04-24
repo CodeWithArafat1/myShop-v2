@@ -18,6 +18,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 
+import logo from '@/assets/logo.png'
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -294,8 +296,9 @@ function NavbarContent() {
             </button>
             
             <Link href="/" className="flex items-center gap-2 group">
-              <ShoppingBag className="h-6 w-6 text-[#16a34a] transition-transform group-hover:-rotate-12" />
-              <span className="text-xl sm:text-2xl font-black tracking-tight text-foreground">AmarShop</span>
+              {/* <ShoppingBag className="h-6 w-6 text-[#16a34a] transition-transform group-hover:-rotate-12" /> */}
+              <Image src={logo} width={120} height={100} alt="logo" />
+              {/* <span className="text-xl sm:text-2xl font-black tracking-tight text-foreground">Neel Nir</span> */}
             </Link>
           </div>
 
@@ -417,12 +420,12 @@ function NavbarContent() {
                           </div>
                         ))}
 
-                        <Button
+                        {/* <Button
                           className="w-full mt-3 h-10 bg-white text-[#16a34a] border border-[#16a34a] hover:bg-[#16a34a] hover:text-white transition-colors"
                           onClick={handleViewAllResults}
                         >
                           View all results for "{searchQuery}"
-                        </Button>
+                        </Button> */}
                       </div>
                     ) : (
                       !isLoadingSearch && (

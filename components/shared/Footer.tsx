@@ -1,29 +1,52 @@
 "use client";
 
 import Link from "next/link";
+import logo from "@/assets/logo.png";
+import Image from "next/image";
+import { Home, Info, ShoppingBag, Sparkles } from "lucide-react";
+
+// ✅ FIX: Define the NavLink interface so TypeScript knows what it is
+interface NavLink {
+  name: string;
+  href: string;
+  icon?: React.ElementType; // The icon is optional because FOOTER_LINKS don't have them
+}
+
+const BASE_NAV_LINKS: NavLink[] = [
+  { name: "Home", href: "/", icon: Home },
+  { name: "Shop", href: "/product", icon: ShoppingBag },
+  { name: "Collections", href: "/collections", icon: Sparkles },
+  { name: "My Order", href: "/track-order", icon: ShoppingBag },
+  { name: "About Us", href: "/about", icon: Info },
+];
+
+const BASE_FOOTER_LINKS: NavLink[] = [
+  { name: "Contact Us", href: "/contact" },
+  { name: "Shipping Policy", href: "/shipping-policy" },
+  { name: "Return Policy", href: "/return-policy" },
+  { name: "FAQs", href: "/faqs" },
+];
 
 export default function Footer() {
   return (
     <footer className="bg-linear-to-r from-[#0f1f17] to-[#1b2f25] text-gray-300">
       <div className="container mx-auto px-6 lg:px-12 py-16">
-
         {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-
           {/* Brand */}
           <div>
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Amar<span className="text-green-500">Shop</span>
-            </h2>
+            <Link href="/" className="flex items-center gap-2 group">
+              {/* <ShoppingBag className="h-6 w-6 text-[#16a34a] transition-transform group-hover:-rotate-12" /> */}
+              <Image src={logo} width={150} height={100} alt="logo" />
+              {/* <span className="text-xl sm:text-2xl font-black tracking-tight text-foreground">Neel Nir</span> */}
+            </Link>
 
-            <p className="text-sm leading-relaxed mb-6 text-gray-400">
-              Premium sarees for the modern woman. <br />
-              Tradition meets contemporary style.
+            <p className="text-sm leading-relaxed mb-6 text-gray-400 mt-4">
+              “Handmade with Love” / “Crafted with Care” <br />
             </p>
 
             {/* Social Icons */}
             <div className="flex items-center gap-3">
-
               {/* Facebook */}
               <a
                 href="#"
@@ -71,7 +94,6 @@ export default function Footer() {
                   <path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2 31.4 31.4 0 000 12a31.4 31.4 0 00.5 5.8 3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1A31.4 31.4 0 0024 12a31.4 31.4 0 00-.5-5.8zM9.8 15.5v-7l6.2 3.5-6.2 3.5z" />
                 </svg>
               </a>
-
             </div>
           </div>
 
@@ -79,10 +101,13 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2 text-sm">
-              {["Home", "Shop", "Categories", "About"].map((item) => (
-                <li key={item}>
-                  <Link href="#" className="hover:text-green-500 transition">
-                    {item}
+              {BASE_NAV_LINKS.map((item, ind) => (
+                <li key={ind}>
+                  <Link
+                    href={item.href}
+                    className="hover:text-green-500 transition"
+                  >
+                    {item.name}
                   </Link>
                 </li>
               ))}
@@ -93,15 +118,13 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4">Support</h3>
             <ul className="space-y-2 text-sm">
-              {[
-                "Contact Us",
-                "Shipping Policy",
-                "Return Policy",
-                "FAQs",
-              ].map((item) => (
-                <li key={item}>
-                  <Link href="#" className="hover:text-green-500 transition">
-                    {item}
+              {BASE_FOOTER_LINKS.map((item, ind) => (
+                <li key={ind}>
+                  <Link
+                    href={item.href}
+                    className="hover:text-green-500 transition"
+                  >
+                    {item.name}
                   </Link>
                 </li>
               ))}
@@ -115,14 +138,12 @@ export default function Footer() {
               We accept bKash, Nagad, Visa, Mastercard, and Cash on Delivery.
             </p>
           </div>
-
         </div>
 
         {/* Bottom */}
         <div className="border-t border-white/10 mt-12 pt-6 text-center text-sm text-gray-500">
-          © {new Date().getFullYear()} Rongila Saree. All rights reserved.
+          © {new Date().getFullYear()} NeelNir. All rights reserved.
         </div>
-
       </div>
     </footer>
   );
