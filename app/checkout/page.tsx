@@ -289,7 +289,7 @@ export default function CheckoutPage() {
 
       {/* Success Modal */}
       <Dialog open={showSuccessModal}>
-        <DialogContent className="sm:max-w-md text-center p-8 border-none shadow-2xl rounded-2xl" hideCloseButton>
+        <DialogContent className="sm:max-w-md text-center p-8 border-none shadow-2xl rounded-2xl" showCloseButton={false}>
           <DialogHeader className="flex flex-col items-center gap-3">
             <div className="h-20 w-20 bg-green-50 rounded-full flex items-center justify-center mb-2">
               <CheckCircle className="h-10 w-10 text-[#16a34a]" />
