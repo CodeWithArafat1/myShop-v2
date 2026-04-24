@@ -191,6 +191,14 @@ export default function ContactForm() {
           </>
         )}
       </div>
+
+          {/* Contact Info Footer */}
+        <div className="mt-10 text-center">
+          <p className="text-muted-foreground text-sm sm:text-base">
+            If you have any further questions, please don't hesitate to contact us at <br />
+            <a href="mailto:support@neelnir.com" className="text-primary font-semibold hover:underline">support@neelnir.com</a> or call us at <span className="font-semibold text-foreground">01772-162533</span>.
+          </p>
+        </div>
     </section>
   );
 }

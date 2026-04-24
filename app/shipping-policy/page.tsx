@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function ShippingPolicy() {
   return (
-    <div className="min-h-screen pt-28 pb-20 bg-background">
+    <div className="min-h-screen pt-28 pb-20 ">
       {/* Header Section */}
       <div className="container-main px-4 max-w-4xl mx-auto text-center mb-12">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-heading text-foreground mb-4">

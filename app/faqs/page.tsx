@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Minus, HelpCircle, MessageCircle } from "lucide-react";
+import { Plus, HelpCircle, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 
 const faqData = [
   {
@@ -25,91 +26,93 @@ const faqData = [
   {
     question: "Ami ki amar order track korte parbo?",
     answer: "Ji, order confirm houar por apni ekti Order ID paben. Amader website-er 'Track Order' page-e giye apni apnar order-er status real-time-e dekhte parben."
-  },
-  {
-    question: "Apnader handmade product gulo ki durable?",
-    answer: "NeelNir-er protiti product khub-e jotno ebong quality material diye toiri kora hoy. Jotno shoho nile egulo bohu din valo thake."
   }
 ];
 
 export default function FAQPage() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  const toggleFAQ = (index: number) => {
-    setActiveIndex(activeIndex === index ? null : index);
-  };
-
   return (
-    <div className="min-h-screen pt-28 pb-20 bg-background">
+    <div className="min-h-screen pt-28 pb-20">
       <div className="container-main px-4 max-w-3xl mx-auto">
         
-        {/* Header Section */}
+        {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            <HelpCircle className="w-4 h-4" />
-            Support Center
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4"
+          >
+            <HelpCircle className="w-4 h-4" /> Support Center
+          </motion.div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-heading text-foreground mb-4">
             Frequently Asked <span className="text-primary">Questions</span>
           </h1>
-          <p className="text-muted-foreground text-base sm:text-lg">
-            Apnar mone thaka proshno gulo ekhane khujun. Aro kichu janar thakle amader message din.
-          </p>
         </div>
 
-        {/* FAQ Accordion List */}
+        {/* FAQ List */}
         <div className="space-y-4">
-          {faqData.map((faq, index) => (
-            <div 
-              key={index} 
-              className={`border border-border/60 rounded-2xl overflow-hidden transition-all duration-300 ${
-                activeIndex === index ? "bg-card shadow-md ring-1 ring-primary/20" : "bg-card/50"
-              }`}
-            >
-              <button
-                onClick={() => toggleFAQ(index)}
-                className="w-full flex items-center justify-between p-5 sm:p-6 text-left focus:outline-none"
-              >
-                <span className={`font-bold text-base sm:text-lg ${activeIndex === index ? "text-primary" : "text-foreground"}`}>
-                  {faq.question}
-                </span>
-                <div className={`shrink-0 ml-4 p-1 rounded-full transition-transform duration-300 ${activeIndex === index ? "bg-primary text-white rotate-0" : "bg-muted text-muted-foreground"}`}>
-                  {activeIndex === index ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                </div>
-              </button>
-
-              <div 
-                className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                  activeIndex === index ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+          {faqData.map((faq, index) => {
+            const isOpen = activeIndex === index;
+            return (
+              <motion.div 
+                key={index}
+                initial={false}
+                className={`border rounded-2xl overflow-hidden transition-colors duration-300 ${
+                  isOpen ? "bg-card border-primary/30 shadow-lg" : "bg-card/50 border-border/60"
                 }`}
               >
-                <div className="p-5 sm:p-6 pt-0 text-muted-foreground leading-relaxed text-sm sm:text-base border-t border-border/10">
-                  {faq.answer}
-                </div>
-              </div>
-            </div>
-          ))}
+                <button
+                  onClick={() => setActiveIndex(isOpen ? null : index)}
+                  className="w-full cursor-pointer flex items-center justify-between p-5 sm:p-6 text-left"
+                >
+                  <span className={`font-bold  text-base sm:text-lg transition-colors ${isOpen ? "text-primary" : "text-foreground"}`}>
+                    {faq.question}
+                  </span>
+                  <motion.div
+                    animate={{ rotate: isOpen ? 45 : 0, backgroundColor: isOpen ? "#16a34a" : "transparent" }}
+                    className={`shrink-0 ml-4 p-1 rounded-full border ${isOpen ? "text-white border-transparent" : "text-muted-foreground border-border"}`}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </motion.div>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
+                    >
+                      <div className="p-5 sm:p-6 pt-0 text-muted-foreground leading-relaxed text-sm sm:text-base border-t border-border/5">
+                        {faq.answer}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-16 bg-primary/5 border border-primary/10 rounded-2xl p-8 text-center">
-          <h3 className="text-xl font-bold text-foreground mb-2">Aro kichu janar ache?</h3>
-          <p className="text-muted-foreground mb-6">
-            Jodi ekhane apnar proshno-ti khuje na pan, tobe shorasori amader message korte paren.
-          </p>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="mt-16 bg-primary/5 border border-primary/10 rounded-2xl p-8 text-center"
+        >
+          <h3 className="text-xl font-bold text-foreground mb-4">Aro kichu janar ache?</h3>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/contact">
-              <Button className="gap-2 px-8 h-12 rounded-full font-bold">
+              <Button className="gap-2 cursor-pointer px-8 h-12 rounded-full font-bold shadow-lg shadow-primary/20">
                 <MessageCircle className="w-4 h-4" /> Contact Us
               </Button>
             </Link>
-            <a href="tel:01772162533">
-              <Button variant="outline" className="h-12 px-8 rounded-full border-primary/20 hover:bg-primary/5 text-primary">
-                Call Support
-              </Button>
-            </a>
           </div>
-        </div>
+        </motion.div>
 
       </div>
     </div>
