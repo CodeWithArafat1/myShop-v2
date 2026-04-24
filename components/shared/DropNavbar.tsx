@@ -46,6 +46,7 @@ interface NavLink {
   subLinks?: { name: string; href: string }[];
 }
 
+// --- Base Static Links ---
 const BASE_NAV_LINKS: NavLink[] = [
   { name: "Home", href: "/", icon: Home },
   { name: "Shop", href: "/product", icon: ShoppingBag },
@@ -55,30 +56,117 @@ const BASE_NAV_LINKS: NavLink[] = [
   { name: "About Us", href: "/about", icon: Info },
 ];
 
+// --- Separated Mobile Navigation Component ---
+function MobileNavigation({
+  isOpen,
+  setIsOpen,
+  navLinks,
+  pathname,
+  currentCategory,
+}: {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  navLinks: NavLink[];
+  pathname: string;
+  currentCategory: string | null;
+}) {
+  const router = useRouter();
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="md:hidden absolute top-16 left-0 w-full bg-background border-b shadow-xl animate-in slide-in-from-top-2 flex flex-col z-40 max-h-[calc(100vh-4rem)] overflow-y-auto">
+      <nav className="flex flex-col p-4 gap-2">
+        {navLinks.map((link) => {
+          const Icon = link.icon;
+          const hasSubLinks = link.subLinks && link.subLinks.length > 0;
+          const isDropdownOpen = activeDropdown === link.name;
+          const isMainActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
+
+          return (
+            <div key={link.name} className="flex flex-col">
+              <div
+                className={`flex items-center justify-between px-4 py-3 rounded-xl hover:bg-[#16a34a]/10 transition-colors cursor-pointer group ${
+                  isMainActive ? "bg-[#16a34a]/10" : ""
+                }`}
+                onClick={() => {
+                  if (hasSubLinks) {
+                    setActiveDropdown(isDropdownOpen ? null : link.name);
+                  } else {
+                    router.push(link.href);
+                    setIsOpen(false);
+                  }
+                }}
+              >
+                <div className={`flex items-center gap-3 text-sm font-medium group-hover:text-[#16a34a] ${isMainActive ? "text-[#16a34a]" : "text-foreground"}`}>
+                  <Icon className={`w-5 h-5 group-hover:text-[#16a34a] ${isMainActive ? "text-[#16a34a]" : "text-muted-foreground"}`} />
+                  {link.name}
+                </div>
+                {hasSubLinks && (
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isDropdownOpen ? "rotate-180 text-[#16a34a]" : "text-muted-foreground"}`} />
+                )}
+              </div>
+
+              {hasSubLinks && (
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isDropdownOpen ? "max-h-[500px] opacity-100 mt-1" : "max-h-0 opacity-0"}`}>
+                  <div className="grid grid-cols-2 gap-2 pl-12 pr-4 border-l-2 border-[#16a34a]/20 ml-6 py-2">
+                    {link.subLinks!.map((subLink) => {
+                      const isSubLinkActive = currentCategory === subLink.name;
+                      return (
+                        <Link
+                          key={subLink.name}
+                          href={subLink.href}
+                          className={`py-2 px-2 rounded-md text-sm hover:text-[#16a34a] hover:bg-[#16a34a]/5 hover:font-medium transition-colors capitalize ${
+                            isSubLinkActive ? "text-[#16a34a] font-bold bg-[#16a34a]/10" : "text-muted-foreground"
+                          }`}
+                          onClick={() => setIsOpen(false)}
+                        >
+                          {subLink.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        
+        <div className="h-px bg-border my-2" />
+        <Link
+          href="/profile"
+          className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-[#16a34a]/10 hover:text-[#16a34a] transition-colors ${
+            pathname === "/profile" ? "bg-[#16a34a]/10 text-[#16a34a]" : "text-foreground"
+          }`}
+          onClick={() => setIsOpen(false)}
+        >
+          <User className={`w-5 h-5 ${pathname === "/profile" ? "text-[#16a34a]" : "text-muted-foreground"}`} />
+          My Account
+        </Link>
+      </nav>
+    </div>
+  );
+}
+
+// --- Main Navbar Content ---
 function NavbarContent() {
   const router = useRouter();
-  
-  // --- Active Link Tracking ---
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentCategory = searchParams ? searchParams.get("category") : null;
 
-  // --- Cart Context Integration ---
   const { cart, setIsOpen, isLoading: isCartLoading } = useCart();
   const totalItems = cart.reduce((total: number, item: any) => total + item.quantity, 0);
 
-  // --- States ---
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeMobileDropdown, setActiveMobileDropdown] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isLoadingSearch, setIsLoadingSearch] = useState(false);
-  
-  // --- Dynamic Collections State ---
   const [dynamicCategories, setDynamicCategories] = useState<{ name: string; href: string }[]>([]);
 
-  // --- Global Keyboard Shortcut for Search ---
+  // Global search shortcut
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -90,7 +178,7 @@ function NavbarContent() {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  // --- Real-time Search Logic ---
+  // Real-time search
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -130,7 +218,7 @@ function NavbarContent() {
     };
   }, [searchQuery]);
 
-  // --- Dynamic Categories Fetching ---
+  // Dynamic Categories Fetching
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -164,17 +252,16 @@ function NavbarContent() {
     fetchCategories();
   }, []);
 
-  // --- Merge Base Links with Dynamic Collections ---
+  // Merge dynamic categories into the "Shop" link
   const navLinks = useMemo(() => {
     return BASE_NAV_LINKS.map(link => {
-      if (link.name === "Collections" && dynamicCategories.length > 0) {
+      if (link.name === "Shop" && dynamicCategories.length > 0) {
         return { ...link, subLinks: dynamicCategories };
       }
       return link;
     });
   }, [dynamicCategories]);
 
-  // --- Handlers ---
   const handleSearchNavigation = (productId: string) => {
     setIsSearchOpen(false);
     setSearchQuery("");
@@ -187,9 +274,9 @@ function NavbarContent() {
     setSearchQuery("");
   };
 
+  // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
-    setActiveMobileDropdown(null);
   }, [pathname, searchParams]);
 
   return (
@@ -197,6 +284,7 @@ function NavbarContent() {
       <div className="container mx-auto px-4 md:px-8">
         <div className="flex h-16 items-center justify-between">
           
+          {/* Logo & Mobile Toggle */}
           <div className="flex items-center gap-2 sm:gap-4">
             <button 
               className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-[#16a34a] transition-colors"
@@ -211,6 +299,7 @@ function NavbarContent() {
             </Link>
           </div>
 
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium absolute left-1/2 -translate-x-1/2">
             {navLinks.map((link) => {
               const isMainActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
@@ -229,24 +318,28 @@ function NavbarContent() {
                     )}
                   </Link>
 
+                  {/* 4-Column Grid Mega Menu Dropdown */}
                   {link.subLinks && link.subLinks.length > 0 && (
-                    <div className="absolute left-1/2 -translate-x-1/2 top-[calc(100%-0.5rem)] w-48 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300 ease-out z-50">
-                      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-2 flex flex-col gap-1 mt-1 relative before:absolute before:-top-2 before:left-0 before:w-full before:h-4 max-h-80 overflow-y-auto">
-                        {link.subLinks.map((subLink) => {
-                          const isSubLinkActive = currentCategory === subLink.name;
-                          
-                          return (
-                            <Link
-                              key={subLink.name}
-                              href={subLink.href}
-                              className={`px-3 py-2 text-sm hover:text-[#16a34a] hover:bg-[#16a34a]/10 hover:font-medium rounded-lg transition-all capitalize ${
-                                isSubLinkActive ? "text-[#16a34a] bg-[#16a34a]/10 font-bold" : "text-gray-600"
-                              }`}
-                            >
-                              {subLink.name}
-                            </Link>
-                          );
-                        })}
+                    <div className="absolute left-1/2 -translate-x-1/2 top-[calc(100%-0.5rem)] opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300 ease-out z-50">
+                      <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-6 mt-1 w-[600px] max-w-[90vw] relative before:absolute before:-top-2 before:left-0 before:w-full before:h-4">
+                        <div className="grid grid-cols-4 gap-4">
+                          {link.subLinks.map((subLink) => {
+                            const isSubLinkActive = currentCategory === subLink.name;
+                            
+                            return (
+                              <Link
+                                key={subLink.name}
+                                href={subLink.href}
+                                className={`px-3 py-2 text-sm hover:text-[#16a34a] hover:bg-[#16a34a]/10 hover:font-medium rounded-lg transition-all capitalize truncate ${
+                                  isSubLinkActive ? "text-[#16a34a] bg-[#16a34a]/10 font-bold" : "text-gray-600"
+                                }`}
+                                title={subLink.name} // Tooltip for long names
+                              >
+                                {subLink.name}
+                              </Link>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -255,6 +348,7 @@ function NavbarContent() {
             })}
           </nav>
 
+          {/* Actions */}
           <div className="flex items-center gap-1 sm:gap-4">
             <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
               <DialogTrigger asChild>
@@ -367,86 +461,18 @@ function NavbarContent() {
         </div>
       </div>
 
-      {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-16 left-0 w-full bg-background border-b shadow-xl animate-in slide-in-from-top-2 flex flex-col z-40 max-h-[calc(100vh-4rem)] overflow-y-auto">
-          <nav className="flex flex-col p-4 gap-2">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const hasSubLinks = link.subLinks && link.subLinks.length > 0;
-              const isOpen = activeMobileDropdown === link.name;
-              
-              const isMainActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
-
-              return (
-                <div key={link.name} className="flex flex-col">
-                  <div
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl hover:bg-[#16a34a]/10 transition-colors cursor-pointer group ${
-                      isMainActive ? "bg-[#16a34a]/10" : ""
-                    }`}
-                    onClick={() => {
-                      if (hasSubLinks) {
-                        setActiveMobileDropdown(isOpen ? null : link.name);
-                      } else {
-                        router.push(link.href);
-                        setIsMobileMenuOpen(false);
-                      }
-                    }}
-                  >
-                    <div className={`flex items-center gap-3 text-sm font-medium group-hover:text-[#16a34a] ${isMainActive ? "text-[#16a34a]" : "text-foreground"}`}>
-                      <Icon className={`w-5 h-5 group-hover:text-[#16a34a] ${isMainActive ? "text-[#16a34a]" : "text-muted-foreground"}`} />
-                      {link.name}
-                    </div>
-                    {hasSubLinks && (
-                      <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? "rotate-180 text-[#16a34a]" : "text-muted-foreground"}`} />
-                    )}
-                  </div>
-
-                  {hasSubLinks && (
-                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-64 opacity-100 mt-1" : "max-h-0 opacity-0"}`}>
-                      <div className="flex flex-col gap-1 pl-12 pr-4 border-l-2 border-[#16a34a]/20 ml-6 py-1">
-                        {link.subLinks!.map((subLink) => {
-                          const isSubLinkActive = currentCategory === subLink.name;
-                          
-                          return (
-                            <Link
-                              key={subLink.name}
-                              href={subLink.href}
-                              className={`py-2 text-sm hover:text-[#16a34a] hover:font-medium transition-colors capitalize ${
-                                isSubLinkActive ? "text-[#16a34a] font-bold" : "text-muted-foreground"
-                              }`}
-                              onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                              {subLink.name}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            
-            <div className="h-px bg-border my-2" />
-            <Link
-              href="/profile"
-              className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-[#16a34a]/10 hover:text-[#16a34a] transition-colors ${
-                pathname === "/profile" ? "bg-[#16a34a]/10 text-[#16a34a]" : "text-foreground"
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <User className={`w-5 h-5 ${pathname === "/profile" ? "text-[#16a34a]" : "text-muted-foreground"}`} />
-              My Account
-            </Link>
-          </nav>
-        </div>
-      )}
+      <MobileNavigation
+        isOpen={isMobileMenuOpen}
+        setIsOpen={setIsMobileMenuOpen}
+        navLinks={navLinks}
+        pathname={pathname}
+        currentCategory={currentCategory}
+      />
     </header>
   );
 }
 
-// Ensure the default export wraps the inner component with Suspense.
-// This prevents Next.js build errors caused by useSearchParams() during static generation.
+// --- Default Export wrapped in Suspense for Next.js Build ---
 export default function DropNavbar() {
   return (
     <Suspense fallback={<header className="h-16 w-full border-b bg-background/95 shadow-sm" />}>

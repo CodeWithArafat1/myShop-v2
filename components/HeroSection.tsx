@@ -105,7 +105,7 @@ export default function HeroSection() {
                     {/* Replace src with your actual YouTube Embed URL */}
                     <iframe
                       className="absolute top-0 left-0 w-full h-full"
-                      src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+                      src="https://www.youtube.com/embed/byxFUKxhT3s?si=bZKU9A2NrpQiCGd5"
                       title="Our Story"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen

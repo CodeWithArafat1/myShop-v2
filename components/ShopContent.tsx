@@ -32,7 +32,8 @@ export default function ShopContent({ initialProducts }: ShopContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  
   const initialCategoryParam = searchParams.get("category");
   const initialSearchParam = searchParams.get("search");
 
@@ -241,8 +242,8 @@ export default function ShopContent({ initialProducts }: ShopContentProps) {
           </div>
         </div>
 
-       <div className="w-full flex items-center justify-between gap-20 md:gap-0 md:w-auto md:justify-end">
-          <Sheet>
+        <div className="w-full flex items-center justify-between gap-20 md:gap-0 md:w-auto md:justify-end">
+          <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="outline"
@@ -277,9 +278,10 @@ export default function ShopContent({ initialProducts }: ShopContentProps) {
               </div>
 
               <div className="p-4 border-t bg-background sticky bottom-0">
+                {/* Update this button to close the sheet properly */}
                 <Button
                   className="w-full"
-                  onClick={() => document.body.click()}
+                  onClick={() => setIsFilterSheetOpen(false)}
                 >
                   View Results
                 </Button>

@@ -26,8 +26,6 @@ import {
 } from "lucide-react";
 import { ProductCard } from "@/components/shared/cards/ProductCard";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-
-// ─────────────────────────────────────────────
 import { useCart } from "@/contexts/CartContext";
 
 // ─────────────────────────────────────────────
@@ -85,7 +83,7 @@ async function fetchAllProducts(): Promise<Product[]> {
 }
 
 // ─────────────────────────────────────────────
-// Skeleton
+// Skeleton Components
 // ─────────────────────────────────────────────
 function Skeleton({ className = "" }: { className?: string }) {
   return (
@@ -128,7 +126,7 @@ function ProductSkeleton() {
 }
 
 // ─────────────────────────────────────────────
-// Trust badge data
+// Trust Badges
 // ─────────────────────────────────────────────
 const TRUST_BADGES = [
   { label: "Free Delivery", sub: "Orders ৳5000+", emoji: "🚚" },
@@ -137,7 +135,7 @@ const TRUST_BADGES = [
 ] as const;
 
 // ─────────────────────────────────────────────
-// Fullscreen Modal
+// Fullscreen Image Modal
 // ─────────────────────────────────────────────
 interface FullscreenModalProps {
   images: string[];
@@ -249,7 +247,7 @@ const FullscreenModal = memo(function FullscreenModal({
 });
 
 // ─────────────────────────────────────────────
-// Main Component
+// Main Product Detail Component
 // ─────────────────────────────────────────────
 export default function ProductDetail() {
   const params = useParams<{ id: string }>();
@@ -280,6 +278,14 @@ export default function ProductDetail() {
     [rawImages]
   );
 
+  // Scroll to top automatically when productId changes
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, [productId]);
+
   useEffect(() => {
     if (!productId) return;
     let cancelled = false;
@@ -296,6 +302,8 @@ export default function ProductDetail() {
         setRawImages([found.image, ...(found.images ?? [])]);
         setSelectedColor(found.colors?.[0] ?? "");
         setSelectedSize(found.sizes?.[0] ?? "");
+        setQuantity(1); // Reset quantity on product change
+        setSelectedImage(0); // Reset image index
 
         const same = arr.filter((p) => p._id !== productId && p.category === found.category).slice(0, 4);
         const others = arr.filter((p) => p._id !== productId && p.category !== found.category).slice(0, 4 - same.length);
@@ -341,6 +349,7 @@ export default function ProductDetail() {
   const savings       = totalOldPrice > totalPrice ? totalOldPrice - totalPrice : 0;
 
   if (loading) return <> <style suppressHydrationWarning>{CSS_BASE}</style> <div className="min-h-screen"> <div className="h-14 sm:h-16" /> <ProductSkeleton /> </div> </>;
+  
   if (error || !product) return <> <style suppressHydrationWarning>{CSS_BASE}</style> <div className="min-h-screen flex flex-col items-center justify-center gap-5 px-4 text-center"> <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center"> <X className="w-9 h-9 text-green-400" /> </div> <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Product Not Found</h1> <Link href="/product"> <button type="button" className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-7 py-3 rounded-full transition-all shadow-lg shadow-green-200 hover:-translate-y-0.5"> <ArrowLeft className="w-4 h-4" /> Back to Shop </button> </Link> </div> </>;
 
   return (
